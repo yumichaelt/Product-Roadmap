@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Roadmap Generator</title>
+    <!-- Font Awesome CDN Removed -->
+    <!-- Link to Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Link to our custom stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- html2pdf.js library via CDN (for PDF export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Note: No additional libraries needed for Word/PPT export as it uses the browser's fetch API -->
+</head>
+<body class="bg-gray-900 font-sans p-8">
+
+    <div class="max-w-4xl mx-auto bg-gray-800 border border-gray-700 p-6 rounded-lg shadow-md relative">
+        <!-- Theme Toggle Switch Removed -->
+
+        <h1 class="text-2xl font-bold text-gray-100 mb-6">Product Roadmap Generator</h1>
+
+        <!-- User Input Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end">
+            <!-- New Roadmap Name Input -->
+            <div>
+                <label for="roadmap-name" class="block text-sm font-medium text-gray-300 mb-1">Product Name</label>
+                <input type="text" id="roadmap-name" name="roadmap-name"
+                       class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-indigo-600 focus:border-indigo-600"
+                       placeholder="Enter the name of your Product">
+            </div>
+            <!-- Existing Completion Date Input -->
+            <div>
+                <label for="completion-date" class="block text-sm font-medium text-gray-300 mb-1">Completion Date:</label>
+                <input type="date" id="completion-date" name="completion-date"
+                       class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-indigo-600 focus:border-indigo-600">
+            </div>
+            <div>
+                <label for="time-increment" class="block text-sm font-medium text-gray-300 mb-1">Time Increment:</label>
+                <select id="time-increment" name="time-increment"
+                        class="w-full px-3 py-2 border bg-gray-700 border-gray-600 text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-indigo-600 focus:border-indigo-600">
+                    <option value="Quarters">Quarterly</option>
+                    <option value="Months">Monthly</option>
+                    <option value="Weeks">Weekly</option>
+                </select>
+            </div>
+            <div>
+                <!-- Generate button spans full width on small screens, aligns with inputs on medium+ -->
+                <button id="generate-roadmap"
+                        class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600">
+                    Generate Roadmap
+                </button>
+            </div>
+        </div>
+
+        <!-- Export Buttons Section - Initially hidden, shown after generation -->
+        <!-- These buttons use third-party APIs for conversion, requiring API keys and network requests -->
+        <div id="export-buttons-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 hidden">
+             <div>
+                <button id="export-pdf"
+                        class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600">
+                    Export as PDF
+                </button>
+            </div>
+             <div>
+                 <!-- Export as Word (.docx) - Uses external API -->
+                <button id="export-word"
+                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600">
+                    Export as Word (.docx)
+                </button>
+            </div>
+             <div>
+                 <!-- Export as PowerPoint (.pptx) - Uses external API -->
+                <button id="export-ppt"
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-600">
+                    Export as PowerPoint (.pptx)
+                </button>
+            </div>
+        </div>
+
+        <!-- Wrapper Div for PDF Export Content (and source for API exports) -->
+        <div id="exportable-content">
+            <!-- Editable Status Legend -->
+            <div id="status-legend" class="mb-6 p-4 bg-gray-700/50 rounded border border-gray-600">
+                <div class="status-legend-header flex justify-between items-center mb-2">
+                     <h3 class="text-sm font-semibold text-gray-300">Status Legend (Editable):</h3>
+                     <button id="add-status-button" type="button" class="text-sm bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600">
+                         + Add Status
+                     </button>
+                </div>
+                <div id="editable-status-list">
+                    <!-- Status items will be dynamically inserted here by script.js -->
+                </div>
+                <!-- Button moved to the header div above -->
+            </div>
+
+            <!-- Button to add more time increments -->
+            <div class="text-center my-4"> <!-- Added margin top/bottom -->
+                <button id="add-increment-button"
+                        class="hidden bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Add Additional Time Period <!-- Final Text -->
+                </button>
+            </div>
+
+            <!-- Output Container for Dynamic Roadmap -->
+            <!-- This is the primary content source for Word/PPT API export -->
+            <div id="roadmap-output" class="space-y-6">
+                <!-- Roadmap segments will be dynamically inserted here -->
+            </div>
+        </div> <!-- End of exportable-content wrapper -->
+
+    </div>
+
+    <!-- Emoji Select Popup (Hidden Initially) -->
+    <div id="emoji-select-popup" class="hidden absolute bg-gray-700 border border-gray-600 rounded shadow-lg p-2 z-50">
+        <div class="emoji-grid grid grid-cols-4 gap-1 max-w-xs max-h-48 overflow-y-auto">
+            <!-- Emoji buttons will be populated here by statusManager.js -->
+        </div>
+    </div>
+
+    <!-- Link to the JavaScript file -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
