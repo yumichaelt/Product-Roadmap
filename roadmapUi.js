@@ -221,7 +221,7 @@ function renderRoadmap(segments) {
  * @param {string} segmentName - The name of the segment (e.g., "Q2 2025").
  * @returns {HTMLElement} The created period container element.
  */
-function createSegmentElement(segmentName) {
+export function createSegmentElement(segmentName) { // Added export
     const periodContainer = document.createElement('div');
     // Set dark as default
     periodContainer.classList.add('p-4', 'bg-gray-700/50', 'rounded', 'border', 'border-gray-600', 'mb-4');
@@ -397,7 +397,7 @@ function addNextTimeIncrement() {
  * Creates the HTML structure for a single checklist item.
  * @returns {HTMLElement} The newly created checklist item div.
  */
-function createChecklistItemElement() {
+export function createChecklistItemElement() { // Added export
     const itemDiv = document.createElement('div');
     // Set dark as default
     itemDiv.classList.add('checklist-item', 'flex', 'items-center', 'mb-2', 'p-2', 'rounded', 'border', 'bg-gray-700', 'border-gray-600');

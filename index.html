@@ -44,13 +44,35 @@
                     <option value="Weeks">Weekly</option>
                 </select>
             </div>
-            <div>
-                <!-- Generate button spans full width on small screens, aligns with inputs on medium+ -->
-                <button id="generate-roadmap"
-                        class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600">
-                    Generate Roadmap
-                </button>
-            </div>
+            <!-- NOTE: Action buttons moved below this closing div -->
+        </div> <!-- End of User Input Section Grid -->
+
+        <!-- Action Buttons Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 mb-4">
+             <!-- Generate Button Wrapper -->
+             <div>
+                 <button id="generate-roadmap"
+                         class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600">
+                     Generate Roadmap
+                 </button>
+             </div>
+             <!-- Save Button Wrapper -->
+             <div>
+                 <button id="save-roadmap-button" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600">
+                     Save Roadmap
+                 </button>
+             </div>
+             <!-- Load Button Wrapper -->
+             <div>
+                 <button id="load-roadmap-button" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-600">
+                     Load Saved Roadmap
+                 </button>
+             </div>
+        </div>
+
+        <!-- Status Message Area -->
+        <div class="text-right mb-4 -mt-2">
+             <span id="saveLoadStatus" class="text-sm text-gray-400"></span> <!-- Status message area -->
         </div>
 
         <!-- Export Buttons Section - Initially hidden, shown after generation -->

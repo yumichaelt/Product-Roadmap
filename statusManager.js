@@ -159,6 +159,7 @@ export function handleLegendClick(event) {
             if (confirm(`Are you sure you want to remove the status "${removedStatusName}"? Items using this status will be reassigned.`)) {
                 STATUSES.splice(index, 1); // Remove status from array
                 saveStatuses();
+                if (window.debouncedAutoSave) window.debouncedAutoSave(); // Trigger autosave
                 renderStatusLegend(); // Re-render legend (updates indices and enables/disables remove buttons)
                 // Update dropdowns, passing the removed name for reassignment logic
                 updateRoadmapDropdowns(null, null, removedStatusName); // Call imported function
@@ -208,6 +209,7 @@ export function handleStatusLegendChange(event) { // Renamed parameter for clari
             }
             STATUSES[index].name = trimmedNewName; // Use trimmed name for the update
             saveStatuses(); // Save the whole array on name change
+            if (window.debouncedAutoSave) window.debouncedAutoSave(); // Trigger autosave
             updateRoadmapDropdowns(oldName, trimmedNewName, null); // Update existing dropdowns, passing trimmed name
         }
     }
@@ -225,6 +227,7 @@ export function handleAddStatusClick() {
         icon: '❓' // Default Emoji icon
     });
     saveStatuses();         // Save changes
+    if (window.debouncedAutoSave) window.debouncedAutoSave(); // Trigger autosave
     renderStatusLegend();   // Re-render the legend UI (will include the new status and enable remove buttons if needed)
     updateRoadmapDropdowns(null, null, null); // Update dropdowns in the roadmap
 }
@@ -318,6 +321,7 @@ function handleEmojiGridClick(event) {
 
                 // 3. Save
                 saveStatuses();
+                if (window.debouncedAutoSave) window.debouncedAutoSave(); // Trigger autosave
 
                 // 4. Update icons in existing checklist items
                 updateChecklistItemIcons(index); // Call imported function
