@@ -29,21 +29,7 @@
                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-indigo-600 focus:border-indigo-600"
                        placeholder="Enter the name of your Product">
             </div>
-            <!-- Existing Completion Date Input -->
-            <div>
-                <label for="completion-date" class="block text-sm font-medium text-gray-300 mb-1">Completion Date:</label>
-                <input type="date" id="completion-date" name="completion-date"
-                       class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-indigo-600 focus:border-indigo-600">
-            </div>
-            <div>
-                <label for="time-increment" class="block text-sm font-medium text-gray-300 mb-1">Time Increment:</label>
-                <select id="time-increment" name="time-increment"
-                        class="w-full px-3 py-2 border bg-gray-700 border-gray-600 text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-indigo-600 focus:border-indigo-600">
-                    <option value="Quarters">Quarterly</option>
-                    <option value="Months">Monthly</option>
-                    <option value="Weeks">Weekly</option>
-                </select>
-            </div>
+            <!-- Completion Date and Time Increment Inputs Removed -->
             <!-- NOTE: Action buttons moved below this closing div -->
         </div> <!-- End of User Input Section Grid -->
 
@@ -116,11 +102,11 @@
                 <!-- Button moved to the header div above -->
             </div>
 
-            <!-- Button to add more time increments -->
-            <div class="text-center my-4"> <!-- Added margin top/bottom -->
-                <button id="add-increment-button"
-                        class="hidden bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                    Add Additional Time Period <!-- Final Text -->
+            <!-- Button to add a new milestone -->
+            <div class="text-center my-4">
+                <button id="add-milestone-btn"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"> <!-- Updated ID, text, styling, removed 'hidden' -->
+                    Add Milestone
                 </button>
             </div>
 

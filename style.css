@@ -7,17 +7,9 @@
     margin-right: 0.25em; /* Adjust as needed for visual preference */
 }
 
-/* Styles for the new checklist system */
+/* Styles for the milestone and checklist system */
 
-/* Header for each time period */
-.period-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem; /* Add some space below the header */
-}
-
-/* Container for checklist items within a period */
+/* Container for checklist items within a milestone */
 .items-container {
     /* Add specific styles if needed, e.g., padding-left */
 }
@@ -131,3 +123,16 @@
 /* .emoji-grid { */
     /* Add custom styles here if needed */
 /* } */
+
+/* Add a subtle outline/ring to editable milestone titles on focus for better visibility */
+/* This complements the Tailwind focus:ring-1 focus:ring-blue-400 added in JS */
+.milestone-section h3[contenteditable="true"]:focus {
+    /* Example: Add a subtle box-shadow or increase ring opacity if needed */
+    /* box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5); */ /* Example using shadow */
+    /* The Tailwind classes applied in roadmapUi.js handle the primary focus ring */
+}
+
+/* Style for the original date display (mostly handled by Tailwind) */
+.original-date-display {
+    /* Add custom styles here if needed, e.g., specific font-style */
+}

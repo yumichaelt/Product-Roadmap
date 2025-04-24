@@ -1,22 +1,21 @@
 // script.js
 // Main entry point for the Roadmap Generator application.
-// Initializes the app and wires up event listeners using imported modules.
+// Initializes the app, handles save/load, and wires up event listeners.
 
 import {
     renderStatusLegend,
-    populateEmojiGrid, // Added import for grid population
+    populateEmojiGrid,
     handleStatusLegendChange,
     handleLegendClick,
     handleAddStatusClick,
-    closeEmojiPopupOnClickOutside, // Added back import for popup closing
-    getStatuses                // Added import
+    closeEmojiPopupOnClickOutside,
+    getStatuses,
 } from './statusManager.js';
 
 import {
     generateRoadmap,
-    handleRoadmapInteraction,
-    createSegmentElement,      // Added import
-    createChecklistItemElement // Added import
+    addMilestoneSection,
+    handleRoadmapInteraction
 } from './roadmapUi.js';
 
 import {
@@ -25,8 +24,7 @@ import {
     exportToPpt
 } from './exportManager.js';
 
-// --- DOM Element References (Essential for Initialization/Listeners) ---
-const completionDateInput = document.getElementById('completion-date');
+// --- DOM Element References ---
 const generateButton = document.getElementById('generate-roadmap');
 const exportButtonsContainer = document.getElementById('export-buttons-container');
 const exportPdfButton = document.getElementById('export-pdf');
@@ -35,15 +33,15 @@ const exportPptButton = document.getElementById('export-ppt');
 const roadmapOutputDiv = document.getElementById('roadmap-output');
 const editableStatusListDiv = document.getElementById('editable-status-list');
 const addStatusBtn = document.getElementById('add-status-button');
-const addIncrementButton = document.getElementById('add-increment-button'); // Added button reference
-const exportableContentDiv = document.getElementById('exportable-content'); // Added container reference
-const roadmapNameInput = document.getElementById('roadmap-name'); // Added roadmap name input reference
-const saveButton = document.getElementById('save-roadmap-button'); // Added save button reference
-const loadButton = document.getElementById('load-roadmap-button'); // Added load button reference
-const saveLoadStatusSpan = document.getElementById('saveLoadStatus'); // Added status span reference
-// const themeToggle = document.getElementById('theme-toggle'); // Removed theme toggle reference
+const addMilestoneBtn = document.getElementById('add-milestone-btn');
+const exportableContentDiv = document.getElementById('exportable-content');
+const roadmapNameInput = document.getElementById('roadmap-name');
+const saveButton = document.getElementById('save-roadmap-button');
+const loadButton = document.getElementById('load-roadmap-button');
+const saveLoadStatusSpan = document.getElementById('saveLoadStatus');
 
-// --- Theme Switching Logic Removed ---
+// --- Constants ---
+const ROADMAP_STORAGE_KEY = 'roadmapGeneratorState_v2'; // Key for milestone-based format
 
 // --- Utility Functions ---
 
@@ -65,439 +63,372 @@ function debounce(func, wait) {
   };
 }
 
-
 // --- Save/Load Functionality ---
-
-const LOCAL_STORAGE_KEY = 'roadmapGeneratorState';
 
 /**
  * Updates the status message span.
  * @param {string} message - The message to display.
  * @param {boolean} [isError=false] - If true, style as an error.
- * @param {number} [timeout=3000] - Duration before clearing the message.
+ * @param {number} [timeout=3000] - Duration before clearing the message (0 for persistent).
  */
 function updateStatusMessage(message, isError = false, timeout = 3000) {
-    if (saveLoadStatusSpan) {
-        saveLoadStatusSpan.textContent = message;
-        saveLoadStatusSpan.style.color = isError ? '#f87171' : '#9ca3af'; // Use Tailwind red-400 and gray-400
-        // Clear the message after the specified timeout
-        if (timeout > 0) {
-            setTimeout(() => {
-                if (saveLoadStatusSpan.textContent === message) { // Only clear if it hasn't changed
-                    saveLoadStatusSpan.textContent = '';
-                }
-            }, timeout);
+  if (saveLoadStatusSpan) {
+    saveLoadStatusSpan.textContent = message;
+    saveLoadStatusSpan.style.color = isError ? '#f87171' : '#9ca3af'; // Tailwind red-400 / gray-400
+    if (timeout > 0) {
+      setTimeout(() => {
+        // Only clear if the message hasn't changed in the meantime
+        if (saveLoadStatusSpan.textContent === message) {
+          saveLoadStatusSpan.textContent = '';
         }
-    } else {
-        console.warn("Save/Load status span not found.");
+      }, timeout);
     }
+  } else {
+    console.warn("Save/Load status span not found.");
+  }
 }
 
 /**
- * Reads the current state of the roadmap from the DOM.
+ * Reads the current state of the roadmap from the DOM (Milestone Structure).
  * @returns {object | null} A serializable object representing the roadmap state, or null if essential elements are missing.
  */
 function getCurrentRoadmapState() {
-    console.log("Getting current roadmap state...");
-    if (!roadmapNameInput || !roadmapOutputDiv) {
-        console.error("Cannot get state: Roadmap name input or output div not found.");
-        return null;
+  if (!roadmapNameInput || !roadmapOutputDiv) {
+    console.error("Cannot get state: Roadmap name input or output div not found.");
+    return null;
+  }
+
+  const state = {
+    roadmapName: roadmapNameInput.value || '',
+    milestones: []
+  };
+
+  const milestoneElements = roadmapOutputDiv.querySelectorAll('.milestone-section');
+
+  milestoneElements.forEach((milestoneEl, milestoneIndex) => {
+    const titleEl = milestoneEl.querySelector('h3[contenteditable="true"]');
+    const dateInput = milestoneEl.querySelector('.milestone-date');
+    const originalDateSpan = milestoneEl.querySelector('.original-date-display');
+    const itemsContainer = milestoneEl.querySelector('.items-container');
+
+    // Basic validation for essential elements within a milestone
+    if (!titleEl || !dateInput || !originalDateSpan || !itemsContainer) {
+      console.warn(`Skipping milestone ${milestoneEl.id || `(index ${milestoneIndex})`} due to missing internal elements.`);
+      return; // Skip this milestone
     }
 
-    const state = {
-        roadmapName: roadmapNameInput.value || '',
-        nextSegmentStartDate: roadmapOutputDiv.dataset.nextSegmentStartDate || null,
-        incrementType: roadmapOutputDiv.dataset.incrementType || null,
-        periods: []
+    const originalDateFromDataset = originalDateSpan.dataset.originalDate || '';
+
+    const milestoneData = {
+      id: milestoneEl.id,
+      title: titleEl.textContent || `Milestone ${milestoneIndex + 1}`, // Use textContent, provide fallback
+      currentCompletionDate: dateInput.value || '',
+      originalCompletionDate: originalDateFromDataset,
+      items: []
     };
 
-    const periodElements = roadmapOutputDiv.querySelectorAll('.p-4.mb-4'); // Selector for period containers
+    const itemElements = itemsContainer.querySelectorAll('.checklist-item');
+    itemElements.forEach((itemEl, itemIndex) => {
+      const descriptionInput = itemEl.querySelector('.item-description');
+      const status = itemEl.dataset.status; // Get status from data attribute
 
-    periodElements.forEach(periodEl => {
-        const header = periodEl.querySelector('.period-header');
-        const segmentNameEl = header?.querySelector('h2');
-        const customTitleInput = header?.querySelector('.period-custom-title');
-        const itemsContainer = periodEl.querySelector('.items-container');
+      if (!descriptionInput || typeof status === 'undefined') {
+        console.warn("Skipping item due to missing description or status:", itemEl);
+        return; // Skip this item
+      }
 
-        if (!segmentNameEl || !customTitleInput || !itemsContainer) {
-            console.warn("Skipping period due to missing elements:", periodEl);
-            return; // Skip this period if essential parts are missing
-        }
-
-        const periodData = {
-            segmentName: segmentNameEl.textContent,
-            // Use dataset value if available (from load), otherwise input value
-            customTitle: periodEl.dataset.customTitle || customTitleInput.value || '',
-            items: []
-        };
-
-        const itemElements = itemsContainer.querySelectorAll('.checklist-item');
-        itemElements.forEach(itemEl => {
-            const descriptionInput = itemEl.querySelector('.item-description');
-            const status = itemEl.dataset.status; // Get status from data attribute
-
-            if (!descriptionInput || !status) {
-                console.warn("Skipping item due to missing elements:", itemEl);
-                return; // Skip this item
-            }
-
-            periodData.items.push({
-                description: descriptionInput.value || '',
-                status: status
-            });
-        });
-
-        state.periods.push(periodData);
+      milestoneData.items.push({
+        // Simple unique ID for items within the milestone (useful for potential future features)
+        id: `item-${milestoneData.id}-${itemIndex + 1}`,
+        text: descriptionInput.value || '',
+        status: status || 'Not Started' // Provide a default status if somehow missing
+      });
     });
 
-    console.log("Current state captured:", state);
-    return state;
+    state.milestones.push(milestoneData);
+  });
+
+  return state;
 }
+
 
 /**
  * Performs the actual save operation to localStorage.
- * Handles feedback and error reporting differently for auto vs manual saves.
+ * Saves the roadmap configuration. Statuses are saved separately by statusManager.
  * @param {boolean} [isAutoSave=false] - Indicates if this is an automatic save.
  */
 function performSave(isAutoSave = false) {
+  if (!isAutoSave) {
+    updateStatusMessage("Saving...", false, 0); // Show persistent "Saving..." for manual save
+  }
+
+  const currentRoadmapState = getCurrentRoadmapState();
+  if (!currentRoadmapState) {
+      updateStatusMessage("Save failed: Could not read roadmap state.", true);
+      return; // Don't proceed if state reading failed
+  }
+
+  try {
+    // Save Roadmap State
+    const roadmapStateJson = JSON.stringify(currentRoadmapState);
+    localStorage.setItem(ROADMAP_STORAGE_KEY, roadmapStateJson);
+
+    // Status configuration is saved automatically by statusManager.js when statuses change.
+
     if (!isAutoSave) {
-        console.log("Performing manual save...");
-        updateStatusMessage("Saving...", false, 0); // Show "Saving..." indefinitely until success/error
-    } else {
-        console.log("Performing autosave...");
-        // No "Saving..." message for autosave
+      updateStatusMessage("Roadmap saved!", false);
     }
-
-    const currentState = getCurrentRoadmapState();
-
-    // Handle potentially empty state - save null or remove key? Saving null is simpler.
-    // if (!currentState || (currentState.periods.length === 0 && !currentState.roadmapName)) {
-    //     localStorage.removeItem(LOCAL_STORAGE_KEY);
-    //     if (!isAutoSave) updateStatusMessage("Roadmap cleared and saved.", false);
-    //     else updateStatusMessage("Changes saved.", false, 1500); // Short confirmation for autosave clear
-    //     console.log("Roadmap state is empty, cleared localStorage.");
-    //     return;
-    // }
-
-    try {
-        const stateJson = JSON.stringify(currentState); // currentState can be null here if function returned null
-        localStorage.setItem(LOCAL_STORAGE_KEY, stateJson);
-
-        if (!isAutoSave) {
-            updateStatusMessage("Roadmap saved!", false); // Longer confirmation for manual save
-            console.log("Manual save successful.");
-        } else {
-            updateStatusMessage("Changes saved.", false, 1500); // Shorter confirmation for autosave
-            console.log("Autosave successful.");
-        }
-    } catch (error) {
-        console.error("Error saving roadmap state to localStorage:", error);
-        if (!isAutoSave) {
-            // Only show alert for manual save failure
-            alert("Error saving roadmap data. Please check the console for details.");
-            updateStatusMessage("Error saving!", true);
-        } else {
-            // Log error for autosave, maybe show subtle feedback?
-            updateStatusMessage("Autosave error.", true, 2000);
-        }
+  } catch (error) {
+    console.error("Error saving state to localStorage:", error);
+    const message = isAutoSave ? "Autosave error." : "Error saving!";
+    updateStatusMessage(message, true);
+    if (!isAutoSave) {
+        alert("Error saving data. Please check the console for details.");
     }
+  }
 }
 
 /**
  * Handles the click event for the manual save button.
- * Includes overwrite confirmation.
  */
 function handleManualSaveClick() {
-    console.log("Manual save button clicked.");
-
-    // Check for existing data and confirm overwrite
-    if (localStorage.getItem(LOCAL_STORAGE_KEY)) {
-        if (!confirm("Saved roadmap data already exists. Overwrite?")) {
-            updateStatusMessage("Save cancelled.");
-            console.log("Save cancelled by user.");
-            return; // Stop if user cancels
-        }
-        console.log("User confirmed overwrite.");
-    }
-
-    // Proceed with the save if no existing data or user confirmed overwrite
-    performSave(false); // Explicitly call as manual save
+  performSave(false); // Call as manual save
 }
 
 // --- Debounced Autosave ---
-const debouncedAutoSave = debounce(() => {
-    performSave(true); // Call performSave indicating it's an autosave
-}, 5000); // 5-second debounce delay
+// Exported so roadmapUi.js can trigger it on interactions that modify the state.
+export const debouncedAutoSave = debounce(() => {
+  performSave(true); // Call performSave indicating it's an autosave
+}, 2500); // 2.5-second debounce delay
 
-// Make it globally accessible for statusManager.js
-window.debouncedAutoSave = debouncedAutoSave;
 
 /**
- * Renders the roadmap UI based on loaded data.
+ * Renders the roadmap UI based on loaded milestone data.
+ * Includes validation for the data format.
  * @param {object} data - The roadmap state object loaded from storage.
+ * @returns {boolean} True if rendering was successful, false otherwise.
  */
 function renderRoadmapFromData(data) {
-    console.log("Rendering roadmap from data:", data);
-    if (!roadmapNameInput || !roadmapOutputDiv || !addIncrementButton || !exportButtonsContainer) {
-        console.error("Cannot render from data: Required UI elements not found.");
-        return;
-    }
-    const statuses = getStatuses(); // Get current statuses for validation/icon lookup
+  if (!roadmapNameInput || !roadmapOutputDiv || !addMilestoneBtn || !exportButtonsContainer) {
+    console.error("Cannot render from data: Required UI elements not found.");
+    return false;
+  }
 
-    // Clear existing content
-    roadmapOutputDiv.innerHTML = '';
-
-    // Restore global state
-    roadmapNameInput.value = data.roadmapName || '';
-    if (data.nextSegmentStartDate && data.incrementType) {
-        roadmapOutputDiv.dataset.nextSegmentStartDate = data.nextSegmentStartDate;
-        roadmapOutputDiv.dataset.incrementType = data.incrementType;
-        addIncrementButton.classList.remove('hidden');
+  // --- Data Format Validation ---
+  if (!data || typeof data !== 'object') {
+    console.error("Invalid data format: Data is null or not an object.");
+    alert("Error: Could not load data due to invalid format.");
+    return false;
+  }
+  // Check for the OLD format (presence of 'periods') - Provide helpful message
+  if (data.periods && Array.isArray(data.periods)) {
+    console.warn("Detected old data format (with 'periods'). Cannot load.");
+    alert("Incompatible Data: Your previously saved roadmap uses an old format and cannot be loaded with this version. Please create a new roadmap. Your old data might still be in localStorage under the key 'roadmapGeneratorState'.");
+    // Optionally offer to clear old data (consider user experience)
+    // if (confirm("Do you want to remove the old incompatible data from storage?")) {
+    //     localStorage.removeItem('roadmapGeneratorState');
+    //     alert("Old data removed.");
+    // }
+    return false; // Stop rendering
+  }
+  // Check for the NEW format (presence of 'milestones')
+  if (!data.milestones || !Array.isArray(data.milestones)) {
+    // Allow loading if it's just an empty roadmap from the new version (only name)
+    if (Object.keys(data).length === 1 && data.hasOwnProperty('roadmapName')) {
+       data.milestones = []; // Ensure milestones array exists for iteration
     } else {
-        delete roadmapOutputDiv.dataset.nextSegmentStartDate;
-        delete roadmapOutputDiv.dataset.incrementType;
-        addIncrementButton.classList.add('hidden');
+      console.error("Invalid data format: 'milestones' array is missing or not an array.");
+      alert("Error: Could not load data. The 'milestones' array is missing or invalid in the saved data.");
+      return false; // Stop rendering
     }
+  }
+  // --- End Validation ---
 
-    // Render periods and items
-    const fragment = document.createDocumentFragment();
-    data.periods?.forEach(periodData => {
-        const periodContainer = createSegmentElement(periodData.segmentName);
-        const customTitleInput = periodContainer.querySelector('.period-custom-title');
-        const itemsContainer = periodContainer.querySelector('.items-container');
+  // Clear existing content before rendering
+  roadmapOutputDiv.innerHTML = '';
 
-        if (customTitleInput) {
-            customTitleInput.value = periodData.customTitle || '';
-            periodContainer.dataset.customTitle = periodData.customTitle || ''; // Also set dataset
-        }
+  // Restore global state (roadmap name)
+  roadmapNameInput.value = data.roadmapName || '';
 
-        if (itemsContainer) {
-            periodData.items?.forEach(itemData => {
-                const itemElement = createChecklistItemElement(); // Creates with default status/icon
-                const descriptionInput = itemElement.querySelector('.item-description');
-                const statusDropdown = itemElement.querySelector('.status-dropdown');
-                const itemIcon = itemElement.querySelector('.checklist-item-status-icon');
-
-                if (descriptionInput) {
-                    descriptionInput.value = itemData.description || '';
-                }
-
-                if (statusDropdown && itemIcon) {
-                    const loadedStatus = itemData.status;
-                    const statusExists = statuses.some(s => s.name === loadedStatus);
-                    const statusToSet = statusExists ? loadedStatus : (statuses.length > 0 ? statuses[0].name : 'Not Started'); // Fallback
-                    const statusObj = statuses.find(s => s.name === statusToSet) || { icon: '❓' };
-
-                    itemElement.dataset.status = statusToSet;
-                    statusDropdown.value = statusToSet;
-                    itemIcon.textContent = statusObj.icon;
-                    itemIcon.setAttribute('aria-label', statusToSet);
-
-                    if (!statusExists && loadedStatus) {
-                        console.warn(`Loaded status "${loadedStatus}" not found in current statuses. Resetting item to "${statusToSet}".`);
-                    }
-                }
-                itemsContainer.appendChild(itemElement);
-            });
-        }
-        fragment.appendChild(periodContainer);
+  // Render milestones using the UI function
+  if (data.milestones.length > 0) {
+    data.milestones.forEach(milestoneData => {
+      // addMilestoneSection handles creating the element and appending it
+      addMilestoneSection(milestoneData);
     });
+    // Buttons visibility is handled within addMilestoneSection
+  } else {
+    // No milestones, ensure buttons are hidden
+    exportButtonsContainer.classList.add('hidden');
+    addMilestoneBtn.classList.add('hidden');
+    // Consider adding a placeholder message in roadmapOutputDiv?
+    // roadmapOutputDiv.innerHTML = '<p class="text-gray-500 text-center p-4">No milestones yet. Click "Add Milestone" to start.</p>';
+  }
 
-    roadmapOutputDiv.appendChild(fragment);
-
-    // Show export buttons if content was loaded
-    if (data.periods && data.periods.length > 0) {
-        exportButtonsContainer.classList.remove('hidden');
-    } else {
-        exportButtonsContainer.classList.add('hidden');
-    }
-
-    console.log("Roadmap rendered from data.");
+  return true; // Indicate success
 }
 
 /**
- * Loads roadmap state from localStorage and renders it.
+ * Loads roadmap state from localStorage (using the new key) and renders it.
  */
 function loadRoadmapState() {
-    console.log("Attempting to load roadmap state...");
-    updateStatusMessage("Loading...");
-    const stateJson = localStorage.getItem(LOCAL_STORAGE_KEY);
+  updateStatusMessage("Loading...", false, 0); // Show Loading...
+  const stateJson = localStorage.getItem(ROADMAP_STORAGE_KEY);
 
-    if (!stateJson) {
-        updateStatusMessage("No saved data found.");
-        console.log("No saved roadmap state found in localStorage.");
-        return;
-    }
+  if (!stateJson) {
+    updateStatusMessage("No saved data found.", false);
+    // Clear the roadmap area if nothing is loaded
+    roadmapOutputDiv.innerHTML = '';
+    roadmapNameInput.value = '';
+    exportButtonsContainer.classList.add('hidden');
+    addMilestoneBtn.classList.add('hidden');
+    return;
+  }
 
-    try {
-        const loadedState = JSON.parse(stateJson);
-        renderRoadmapFromData(loadedState);
-        updateStatusMessage("Loaded!");
-        console.log("Roadmap state loaded and rendered successfully.");
-    } catch (error) {
-        updateStatusMessage("Error loading data.", true);
-        console.error("Error parsing or rendering roadmap state from localStorage:", error);
-        // Optionally clear corrupted data:
-        // localStorage.removeItem(LOCAL_STORAGE_KEY);
+  try {
+    const loadedState = JSON.parse(stateJson);
+    const renderSuccess = renderRoadmapFromData(loadedState); // Calls validation internally
+
+    if (renderSuccess) {
+      updateStatusMessage("Roadmap loaded!", false);
+    } else {
+      // renderRoadmapFromData handles specific alerts for incompatible/invalid data
+      updateStatusMessage("Load failed.", true); // General failure message
+      // Clear the UI if loading failed after parsing (redundant but safe)
+      roadmapOutputDiv.innerHTML = '';
+      roadmapNameInput.value = '';
+      exportButtonsContainer.classList.add('hidden');
+      addMilestoneBtn.classList.add('hidden');
     }
+  } catch (error) {
+    updateStatusMessage("Error loading data!", true);
+    console.error("Error parsing roadmap state (v2) from localStorage:", error);
+    alert("Error parsing saved data. It might be corrupted. See console for details.");
+    // Clear the UI on parsing error
+    roadmapOutputDiv.innerHTML = '';
+    roadmapNameInput.value = '';
+    exportButtonsContainer.classList.add('hidden');
+    addMilestoneBtn.classList.add('hidden');
+  }
 }
 
 /**
  * Attempts to automatically load saved state on page load.
+ * Loads statuses first, then roadmap data.
  */
 function attemptAutoLoad() {
-    console.log("Attempting auto-load...");
-    const stateJson = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stateJson) {
-        console.log("Found saved state, proceeding with auto-load.");
-        loadRoadmapState(); // Re-use the main load function (handles parsing, rendering, feedback)
-    } else {
-        console.log("No saved state found for auto-load.");
-    }
+  // 1. Load Statuses FIRST (essential for rendering items correctly)
+  renderStatusLegend(); // Render the legend
+  populateEmojiGrid(); // Populate emoji grid based on loaded/default statuses
+
+  // 2. Load Roadmap Data (using the new key)
+  const stateJson = localStorage.getItem(ROADMAP_STORAGE_KEY);
+  if (stateJson) {
+    // Use loadRoadmapState which includes parsing, validation, rendering, and feedback
+    loadRoadmapState();
+  } else {
+    // No saved roadmap state found, ensure buttons are hidden
+    exportButtonsContainer.classList.add('hidden');
+    addMilestoneBtn.classList.add('hidden');
+  }
 }
 
 
 // --- Initialization & Event Listeners ---
 
 /**
- * Initializes the application: sets up default values and attaches event listeners.
+ * Initializes the application: sets up UI and attaches event listeners.
  */
 function initializeApp() {
-    // Initial UI setup calls from imported modules
-    renderStatusLegend();
-    populateEmojiGrid(); // Populate the emoji popup grid
+  // Ensure export/add buttons are hidden initially (attemptAutoLoad will show them if needed)
+  if (exportButtonsContainer) exportButtonsContainer.classList.add('hidden');
+  if (addMilestoneBtn) addMilestoneBtn.classList.add('hidden');
 
-    // Set the minimum date for the date picker to today
-    const today = new Date().toISOString().split('T')[0];
-    if (completionDateInput) {
-        completionDateInput.setAttribute('min', today);
-    } else {
-        console.error("Completion date input element not found.");
-    }
+  // --- Attach Event Listeners ---
 
+  // Generate Button (Clears and adds first milestone)
+  if (generateButton) {
+    generateButton.addEventListener('click', () => {
+      // Confirm if roadmap already has content
+      if (roadmapOutputDiv.children.length > 0) {
+        if (!confirm("This will clear the current roadmap and start a new one. Continue?")) {
+          return;
+        }
+      }
+      generateRoadmap(); // Call the UI function to clear and add the first milestone
+      debouncedAutoSave(); // Save the initial state
+    });
+  } else {
+    console.error("Generate roadmap button element not found.");
+  }
 
-    // Ensure export buttons are hidden on initial load
-    if (exportButtonsContainer) {
-        exportButtonsContainer.classList.add('hidden');
-    } else {
-         console.error("Export buttons container element not found.");
-    }
+  // Add Milestone Button
+  if (addMilestoneBtn) {
+    addMilestoneBtn.addEventListener('click', () => {
+      addMilestoneSection(); // Call UI function to add a new milestone
+      debouncedAutoSave(); // Save after adding
+    });
+  } else {
+    console.error("Add Milestone button element not found.");
+  }
 
-    // Ensure add increment button is hidden on initial load
-    if (addIncrementButton) {
-        addIncrementButton.classList.add('hidden');
-    } else {
-        console.error("Add Increment button element not found.");
-    }
+  // Export Buttons
+  if (exportPdfButton) exportPdfButton.addEventListener('click', exportToPdf);
+  if (exportWordButton) exportWordButton.addEventListener('click', exportToWord);
+  if (exportPptButton) exportPptButton.addEventListener('click', exportToPpt);
 
+  // Delegated listeners for interactions within the main content area (#exportable-content)
+  if (exportableContentDiv) {
+    // roadmapUi.js's handleRoadmapInteraction is responsible for identifying the specific
+    // interaction (add item, delete item, edit text, change status, etc.)
+    // and triggering debouncedAutoSave when necessary.
+    exportableContentDiv.addEventListener('click', handleRoadmapInteraction);
+    exportableContentDiv.addEventListener('change', handleRoadmapInteraction);
+    exportableContentDiv.addEventListener('input', handleRoadmapInteraction);
 
-    // Attach main event listeners using imported handlers
-    if (generateButton) {
-        generateButton.addEventListener('click', generateRoadmap);
-    } else {
-        console.error("Generate roadmap button element not found.");
-    }
+    // Use capture phase for blur to catch events on elements that might lose focus
+    // before the event bubbles up (like contenteditable).
+    // handleRoadmapInteraction in roadmapUi.js needs to check event.target
+    // to determine if the blur occurred on a relevant element (title, date input).
+    exportableContentDiv.addEventListener('blur', handleRoadmapInteraction, true); // Use capture phase
 
-    if (exportPdfButton) {
-        exportPdfButton.addEventListener('click', exportToPdf);
-    } else {
-        console.error("Export PDF button element not found.");
-    }
+  } else {
+    console.error("Exportable content container element (#exportable-content) not found.");
+  }
 
-    if (exportWordButton) {
-        exportWordButton.addEventListener('click', exportToWord);
-    } else {
-        console.error("Export Word button element not found.");
-    }
+  // Listeners for the editable status legend
+  if (editableStatusListDiv) {
+    editableStatusListDiv.addEventListener('input', handleStatusLegendChange); // Handles name changes
+    editableStatusListDiv.addEventListener('click', handleLegendClick);      // Handles emoji/remove clicks
+  } else {
+    console.error("Editable status list container element not found.");
+  }
 
-    if (exportPptButton) {
-        exportPptButton.addEventListener('click', exportToPpt);
-    } else {
-        console.error("Export PPT button element not found.");
-    }
+  // Listener for the "Add Status" button
+  if (addStatusBtn) {
+    addStatusBtn.addEventListener('click', handleAddStatusClick);
+  } else {
+    console.error("Add status button element not found.");
+  }
 
+  // Listener to close emoji popup on outside click (capture phase recommended)
+  document.addEventListener('click', closeEmojiPopupOnClickOutside, true);
 
-    // Add delegated event listeners for interactions within the exportable content area
-    if (exportableContentDiv) {
-        // Existing listener for general UI interactions (add/delete item, etc.)
-        exportableContentDiv.addEventListener('click', handleRoadmapInteraction);
-        exportableContentDiv.addEventListener('change', handleRoadmapInteraction);
-        exportableContentDiv.addEventListener('input', handleRoadmapInteraction);
+  // Save/Load Buttons
+  if (saveButton) saveButton.addEventListener('click', handleManualSaveClick);
+  if (loadButton) loadButton.addEventListener('click', loadRoadmapState);
 
-        // Add specific listeners for AUTOSAVE triggers
-        exportableContentDiv.addEventListener('input', (event) => {
-            // Trigger on typing in roadmap name, period titles, or item descriptions
-            if (event.target.matches('#roadmap-name, .period-custom-title, .item-description')) {
-                console.log('Autosave triggered by input event:', event.target.id || event.target.className);
-                debouncedAutoSave();
-            }
-        });
-        exportableContentDiv.addEventListener('change', (event) => {
-            // Trigger on changing status dropdown
-            if (event.target.matches('.status-dropdown')) {
-                console.log('Autosave triggered by change event:', event.target.className);
-                debouncedAutoSave();
-            }
-        });
-         exportableContentDiv.addEventListener('click', (event) => {
-            // Trigger on adding/deleting items or adding increments
-            if (event.target.closest('.add-item-button, .delete-item-button, #add-increment-button')) {
-                 console.log('Autosave triggered by click event:', event.target.id || event.target.closest('button')?.className);
-                 // We might want a shorter debounce or immediate save here, but sticking to 5s for now
-                 debouncedAutoSave();
-            }
-        });
+  // Listener for roadmap name changes to trigger autosave
+  if (roadmapNameInput) {
+      roadmapNameInput.addEventListener('input', debouncedAutoSave);
+  }
 
-    } else {
-        console.error("Exportable content container element (#exportable-content) not found.");
-    }
-
-
-    // Add listeners for the editable status legend
-    if (editableStatusListDiv) {
-        // Listener for name changes (input event)
-        editableStatusListDiv.addEventListener('input', handleStatusLegendChange);
-        // Listener for emoji button clicks & remove button clicks (click event)
-        editableStatusListDiv.addEventListener('click', handleLegendClick);
-        // Removed 'change' listener for select dropdown
-    } else {
-        console.error("Editable status list container element not found.");
-    }
-
-    // Add listener for the "Add Status" button
-    if (addStatusBtn) {
-        addStatusBtn.addEventListener('click', handleAddStatusClick);
-    } else {
-        console.error("Add status button element not found.");
-    }
-
-
-    // Add listener to close emoji popup on outside click (using capture phase)
-    document.addEventListener('click', closeEmojiPopupOnClickOutside, true); // Added back listener
-
-    // Removed listener for the theme toggle
-
-    // Add listeners for Save/Load buttons
-    if (saveButton) {
-        saveButton.addEventListener('click', handleManualSaveClick); // Use the new handler
-    } else {
-        console.error("Save roadmap button element not found.");
-    }
-
-    if (loadButton) {
-        loadButton.addEventListener('click', loadRoadmapState);
-    } else {
-        console.error("Load roadmap button element not found.");
-    }
-
-
-    console.log("Roadmap Generator Initialized (Modular).");
-
-    // Removed applyInitialTheme() call
-
-    // Attempt to auto-load saved state after initialization
-    attemptAutoLoad();
+  // Attempt to auto-load saved state AFTER setting up listeners
+  attemptAutoLoad();
 }
 
 // --- Start the App ---
-initializeApp();
+// Ensure the DOM is fully loaded before initializing the app
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+});
