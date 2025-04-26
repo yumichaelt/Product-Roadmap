@@ -1,138 +1,347 @@
 /* style.css */
-/* This file contains minimal custom styles that complement Tailwind CSS. */
 
-/* Add a small margin to the right of status indicators in the legend */
-/* This helps ensure consistent spacing, especially if emojis render differently across browsers/OS */
-.status-indicator {
-    margin-right: 0.25em; /* Adjust as needed for visual preference */
+/* --- General Body & Container --- */
+body {
+    /* Using Bootstrap's dark theme via body class, so minimal styles needed here */
+    /* Consider adding a subtle background pattern or gradient if desired */
 }
 
-/* Styles for the milestone and checklist system */
-
-/* Container for checklist items within a milestone */
-.items-container {
-    /* Add specific styles if needed, e.g., padding-left */
+.container {
+    /* Bootstrap handles most container styling */
+    max-width: 1200px; /* Optional: Set a max-width for very large screens */
 }
 
-/* Individual checklist item */
-.checklist-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.5rem; /* Space between items */
-    padding: 0.5rem; /* Padding inside the item */
-    border-radius: 0.375rem; /* Tailwind rounded-md */
+/* --- Headings & Text --- */
+h1, h2, h3, h4, h5, h6 {
+    /* Bootstrap provides heading styles */
 }
 
-/* Status selector container */
-.status-selector {
-    display: flex;
-    gap: 0.25rem; /* Space between status options */
-    margin-right: 0.5rem; /* Space between selector and description */
+/* --- Buttons --- */
+/* Bootstrap button styles are generally sufficient */
+
+/* --- Forms --- */
+/* Bootstrap form control styles are used */
+.form-control::placeholder { /* Standard syntax */
+  color: #6c757d; /* Bootstrap's muted color */
+  opacity: 1; /* Override default opacity */
 }
 
-/* Individual status option */
-.status-option {
+/* --- Status Legend --- */
+#status-legend {
+    /* Background and border handled by Bootstrap classes */
+}
+
+.status-item {
+    /* Using Bootstrap flex utilities for layout */
+}
+
+.status-color-indicator { /* Renamed from status-color-box for clarity */
+    width: 20px;
+    height: 20px;
+    border-radius: 4px; /* Slightly rounded corners */
     cursor: pointer;
-    padding: 0.25rem; /* Padding inside the option */
-    border-radius: 0.25rem; /* Slightly rounded corners */
-    border: 1px solid transparent; /* Placeholder for selected border */
-    line-height: 1; /* Ensure emojis align well */
-    font-size: 0.875rem; /* Tailwind text-sm */
-    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border */
+    display: inline-flex; /* Use flex to center content */
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8em; /* Adjust emoji size */
+    line-height: 1; /* Ensure emoji fits vertically */
 }
 
-.status-option:hover {
-    background-color: #f3f4f6; /* Tailwind gray-100 */
+.status-name-input {
+    /* Using Bootstrap form-control styling */
+    /* Make background slightly darker to differentiate */
+    background-color: #495057; /* Slightly darker than default secondary */
 }
 
-/* Style for the selected status option */
-.selected-status {
-    border: 1px solid #3b82f6; /* Tailwind blue-500 */
-    background-color: #dbeafe; /* Tailwind blue-100 */
+/* --- Emoji Popup --- */
+#emoji-select-popup {
+    /* Positioning and basic styling handled by Bootstrap classes */
+    width: auto; /* Allow content to determine width */
+    z-index: 1050; /* Ensure it's above most other content */
 }
 
-/* Task description input */
-.item-description {
-    flex-grow: 1; /* Take up remaining space */
-    padding: 0.25rem 0.5rem; /* Adjust padding */
-    border: 1px solid #d1d5db; /* Tailwind gray-300 */
-    border-radius: 0.375rem; /* Tailwind rounded-md */
-    font-size: 0.875rem; /* Tailwind text-sm */
+.emoji-grid {
+    /* Grid layout handled by Bootstrap grid classes */
 }
 
-/* Delete button for an item */
-.delete-item-button {
-    margin-left: 0.5rem; /* Space before the button */
-    color: #ef4444; /* Tailwind red-500 */
+.emoji-button {
     background: none;
     border: none;
+    font-size: 1.5rem; /* Larger emoji */
     padding: 0.25rem;
     cursor: pointer;
-    font-weight: bold;
+    border-radius: 4px;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.emoji-button:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Subtle hover */
+}
+
+/* --- Roadmap Output --- */
+#roadmap-output {
+    /* Container for milestones */
+}
+
+/* --- Milestone Section (Card) --- */
+.milestone-section {
+    /* Using Bootstrap card styling */
+}
+
+.card-header {
+    /* Using Bootstrap card-header styling */
+    /* Ensure enough vertical padding for multi-line titles/dates */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* Editable Title & Purpose Placeholders */
+.editable-placeholder:empty::before {
+    content: attr(aria-label) '...'; /* Use aria-label for placeholder text */
+    color: #6c757d; /* Muted color */
+    font-style: italic;
+    pointer-events: none; /* Prevent interaction with the placeholder text */
+}
+/* Hide placeholder when focused (optional, but good UX) */
+.editable-placeholder:focus::before {
+    content: "";
+}
+/* Style for when contenteditable is empty but focused */
+.editable-placeholder:focus:empty {
+   /* Maybe add a subtle border or background? */
+}
+/* Style for when contenteditable has content */
+.editable-placeholder:not(:empty) {
+    /* Reset any placeholder-specific styles if needed */
+}
+
+
+/* Specific styling for the title within the header */
+.milestone-section h4[contenteditable="true"] {
+    /* Remove default heading margin */
+    margin-bottom: 0;
+    /* Allow wrapping */
+    white-space: normal;
+    word-wrap: break-word;
+    /* Add some padding if needed, though Bootstrap's p-1 might suffice */
+    /* Ensure focus ring is visible */
+}
+.milestone-section h4[contenteditable="true"]:focus {
+    outline: none; /* Remove default outline if using focus-ring */
+}
+
+
+/* Milestone Dates */
+.milestone-dates {
+    /* Layout handled by Bootstrap flex utilities */
+    white-space: nowrap; /* Prevent wrapping within the dates container itself */
+}
+.milestone-dates label,
+.milestone-dates .original-date-display {
+     margin-bottom: 0; /* Remove default margins if any */
+}
+.milestone-date { /* The input element */
+    /* Width handled by w-auto */
+    /* Consider max-width if needed */
+}
+
+/* Milestone Purpose */
+.milestone-purpose[contenteditable="true"] {
+    white-space: pre-wrap; /* Allow wrapping and preserve whitespace */
+    word-wrap: break-word;
+    min-height: 50px; /* Ensure a minimum clickable area */
+}
+.milestone-purpose[contenteditable="true"]:focus {
+    outline: none; /* Remove default outline if using focus-ring */
+}
+
+
+/* --- Checklist Items --- */
+.items-container {
+    /* Container for checklist items */
+}
+
+.checklist-item {
+    /* Using Bootstrap flex, border, padding utilities */
+    /* Ensure consistent alignment */
+    align-items: center;
+}
+
+.checklist-item-status-icon {
+    width: 24px; /* Fixed width for alignment */
+    text-align: center;
+    font-size: 1.1rem; /* Adjust icon size */
     line-height: 1;
 }
 
-.delete-item-button:hover {
-    color: #dc2626; /* Tailwind red-600 */
+.status-dropdown {
+    /* Using Bootstrap form-select styling */
+    flex-basis: 150px; /* Give dropdown a base width */
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
-/* You can add other minor custom styles here if required */
-
-/* Style for the emoji status indicator within a checklist item */
-.checklist-item-status-icon {
-    /* Adjust font-size or vertical-align if needed for better alignment */
-    /* Example: vertical-align: middle; */
-    /* Example: font-size: 1.1em; */
-    display: inline-block; /* Helps with consistent spacing/alignment */
-    width: 1.2em;         /* Give it a bit of fixed width */
-    width: 1.2em;         /* Give it a bit of fixed width */
-    text-align: center;   /* Center emoji within the width */
+.item-description {
+    /* Using Bootstrap form-control styling */
+    /* flex-grow: 1 ensures it takes remaining space */
 }
 
-/* Removed styles for .status-emoji-select */
-
-/* Style for the button in the legend that opens the emoji popup */
-.status-emoji-button {
-    /* Using Tailwind classes primarily, but can add specifics */
-    cursor: pointer;
-    /* Ensure consistent size if needed */
-    /* width: 2rem; */
-    /* height: 2rem; */
-}
-.status-emoji-button span {
-    display: inline-block; /* Helps center emoji if needed */
+.delete-item-button, .delete-milestone-btn {
+    /* Using Bootstrap button styling */
+    line-height: 1; /* Adjust line height for small buttons */
+    padding: 0.25rem 0.5rem; /* Adjust padding */
 }
 
-
-/* Style for the emoji choice buttons within the popup */
-.emoji-choice-btn {
-    cursor: pointer;
-    text-align: center;
-    /* Ensure emojis are clear */
-    font-size: 1.25rem; /* Tailwind text-xl */
-    line-height: 1.5; /* Adjust line height for better vertical centering */
-    /* Using Tailwind classes for border, bg, hover, focus */
+/* --- Drag Handle Specific Styles --- */
+.drag-handle {
+    /* Base styles applied inline or via Bootstrap classes */
+    touch-action: none; /* Improve touch dragging experience */
+    user-select: none; /* Prevent text selection when dragging */
 }
 
-/* Optional: Style for the popup container itself if Tailwind classes aren't sufficient */
-/* #emoji-select-popup { */
-    /* Add custom styles here if needed */
-/* } */
-
-/* Optional: Style for the grid container if Tailwind classes aren't sufficient */
-/* .emoji-grid { */
-    /* Add custom styles here if needed */
-/* } */
-
-/* Add a subtle outline/ring to editable milestone titles on focus for better visibility */
-/* This complements the Tailwind focus:ring-1 focus:ring-blue-400 added in JS */
-.milestone-section h3[contenteditable="true"]:focus {
-    /* Example: Add a subtle box-shadow or increase ring opacity if needed */
-    /* box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5); */ /* Example using shadow */
-    /* The Tailwind classes applied in roadmapUi.js handle the primary focus ring */
+.drag-handle:active {
+    cursor: grabbing; /* Change cursor when actively dragging */
 }
 
-/* Style for the original date display (mostly handled by Tailwind) */
-.original-date-display {
-    /* Add custom styles here if needed, e.g., specific font-style */
+/* --- SortableJS Helper Classes --- */
+/* Class applied by SortableJS while dragging (placeholder) */
+.sortable-ghost {
+    opacity: 0.4 !important; /* Ensure opacity overrides other styles */
+    background-color: #555 !important; /* Darker ghost item, !important might be needed */
+    border: 1px dashed #888 !important; /* Add dashed border for clarity, ensure override */
+}
+
+/* Class applied to the item being dragged */
+.sortable-chosen {
+    /* Optional: Add a subtle shadow or background change */
+    /* background-color: rgba(var(--bs-light-rgb), 0.1) !important; */
+    /* box-shadow: 0 2px 5px rgba(0,0,0,0.2); */
+}
+
+/* --- Export Specific Styles --- */
+/* Styles applied only during export to adjust layout/appearance */
+body.exporting #export-buttons-container,
+body.exporting #generate-roadmap,
+body.exporting #save-roadmap-button,
+body.exporting #load-roadmap-button,
+body.exporting #add-milestone-btn,
+body.exporting .delete-item-button,
+body.exporting .delete-milestone-btn,
+body.exporting .add-item-btn,
+body.exporting #add-status-button,
+body.exporting .remove-status-btn,
+body.exporting .status-color-indicator, /* Hide interactive elements */
+body.exporting input[type="date"], /* Hide date input */
+body.exporting select.status-dropdown, /* Hide status dropdown */
+body.exporting .drag-handle, /* Hide drag handle */
+body.exporting #saveLoadStatus, /* Hide save/load status */
+body.exporting #status-legend h3 button /* Hide add status button in legend */
+{
+    display: none !important;
+}
+
+/* Show original date text instead of input during export */
+body.exporting .original-date-display {
+    display: inline !important; /* Ensure it's visible */
+}
+/* Show target date text instead of input during export */
+body.exporting .milestone-date::after {
+    content: attr(value); /* Display the date value */
+    display: inline;
+    padding-left: 0.25rem; /* Add some space */
+    color: #adb5bd; /* Muted color */
+}
+
+
+/* Display item status text instead of dropdown during export */
+body.exporting .checklist-item::before { /* Use ::before on the item itself */
+    content: attr(data-status); /* Get status from data attribute */
+    display: inline-block; /* Or inline, adjust as needed */
+    /* Add styling similar to the dropdown or icon */
+    padding: 0.1rem 0.4rem;
+    margin-right: 0.5rem; /* Space before description */
+    font-size: 0.8em;
+    border-radius: 4px;
+    background-color: #495057; /* Match input background */
+    color: #f8f9fa; /* Light text */
+    white-space: nowrap;
+    order: 2; /* Place it after icon/handle but before description */
+}
+/* Ensure icon is still visible and ordered correctly */
+body.exporting .checklist-item-status-icon {
+    display: inline-block !important; /* Ensure icon is visible */
+    order: 1; /* Icon first */
+    margin-right: 0.5rem; /* Space after icon */
+}
+/* Adjust description order */
+body.exporting .item-description {
+    order: 3;
+}
+
+
+/* Make contenteditable divs non-editable during export */
+body.exporting [contenteditable="true"] {
+    contenteditable: false;
+    border: none; /* Remove any focus borders */
+    padding: 1px; /* Restore minimal padding if needed */
+    background-color: transparent !important; /* Ensure no background overrides */
+}
+
+/* Ensure text within contenteditable is visible */
+body.exporting .milestone-section h4,
+body.exporting .milestone-purpose {
+    color: #f8f9fa !important; /* Ensure light text */
+}
+
+/* Ensure item descriptions are treated as plain text */
+body.exporting .item-description {
+    border: none;
+    background-color: transparent !important;
+    padding: 1px;
+    color: #f8f9fa !important; /* Ensure light text */
+    /* Display value instead of input field */
+    display: inline-block; /* Or block, depending on desired layout */
+    width: auto; /* Adjust width */
+    flex-grow: 1; /* Allow it to take space */
+}
+/* Use pseudo-element to show the value of the input */
+body.exporting .item-description::after {
+    content: attr(value);
+    white-space: pre-wrap; /* Allow wrapping */
+}
+
+
+/* Adjust card styling for export if needed */
+body.exporting .card {
+    border: 1px solid #6c757d !important; /* Ensure border is visible */
+    box-shadow: none !important; /* Remove shadow */
+    background-color: #212529 !important; /* Ensure dark background */
+}
+body.exporting .card-header,
+body.exporting .card-body {
+     background-color: transparent !important; /* Remove specific backgrounds */
+}
+
+/* Ensure legend looks okay */
+body.exporting #status-legend {
+    border: 1px solid #6c757d !important;
+    background-color: transparent !important;
+}
+body.exporting .status-item {
+    /* Display status name and icon clearly */
+}
+body.exporting .status-item span:first-child { /* Assuming icon is first */
+    display: inline-block !important; /* Ensure icon is visible */
+    margin-right: 0.5rem;
+}
+body.exporting .status-item span:last-child { /* Assuming name is last */
+     display: inline-block !important; /* Ensure name is visible */
+     color: #f8f9fa !important;
+}
+
+
+/* --- Utility Classes --- */
+.hidden {
+    display: none;
 }

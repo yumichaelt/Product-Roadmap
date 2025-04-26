@@ -87,26 +87,31 @@ export function renderStatusLegend() {
 
   STATUSES.forEach((status, index) => {
     const itemDiv = document.createElement('div');
-    itemDiv.classList.add('status-definition-item', 'flex', 'items-center', 'mb-1', 'space-x-2');
+    // Use Bootstrap flex utilities and spacing
+    itemDiv.classList.add('status-definition-item', 'd-flex', 'align-items-center', 'mb-2', 'gap-2'); // Use gap for spacing
     itemDiv.dataset.index = index; // Store index for easy reference in event handlers
 
     // Emoji Icon Button (opens popup)
     const emojiButton = document.createElement('button');
     emojiButton.type = 'button';
-    emojiButton.classList.add('status-emoji-button', 'border', 'border-gray-500', 'rounded', 'p-1', 'w-8', 'h-8', 'flex', 'items-center', 'justify-center', 'hover:bg-gray-600', 'focus:outline-none', 'focus:ring-1', 'focus:ring-indigo-600');
+    // Use Bootstrap button styling (outline for subtle look)
+    emojiButton.classList.add('status-emoji-button', 'btn', 'btn-outline-secondary', 'btn-sm', 'p-1', 'd-flex', 'align-items-center', 'justify-content-center');
+    emojiButton.style.width = '2.2rem'; // Fixed width for consistency
+    emojiButton.style.height = '2.2rem';
     emojiButton.dataset.index = index; // Link button to status index
     emojiButton.setAttribute('aria-label', `Change icon for ${status.name}`);
 
     const emojiDisplaySpan = document.createElement('span');
     emojiDisplaySpan.textContent = status.icon || '❓'; // Display current emoji or fallback
-    emojiDisplaySpan.classList.add('text-lg'); // Make emoji slightly larger
+    emojiDisplaySpan.classList.add('fs-5'); // Use Bootstrap font size class
     emojiButton.appendChild(emojiDisplaySpan);
 
     // Input for Name
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.value = status.name;
-    nameInput.classList.add('status-name-input', 'border', 'border-gray-500', 'bg-gray-600', 'text-gray-100', 'rounded', 'p-1', 'flex-grow', 'text-sm', 'focus:outline-none', 'focus:ring-1', 'focus:ring-blue-500');
+    // Use Bootstrap form control styling
+    nameInput.classList.add('status-name-input', 'form-control', 'form-control-sm', 'flex-grow-1', 'bg-secondary', 'text-light', 'border-secondary'); // flex-grow-1 takes remaining space
     nameInput.setAttribute('aria-label', `Edit name for status ${status.name}`);
 
     // Remove Button for this status
@@ -114,13 +119,14 @@ export function renderStatusLegend() {
     removeButton.type = 'button';
     removeButton.innerHTML = '&times;'; // 'X' symbol
     removeButton.title = 'Remove Status';
-    removeButton.classList.add('remove-status-button', 'ml-2', 'text-red-400', 'hover:text-red-300', 'font-bold', 'focus:outline-none', 'focus:ring-1', 'focus:ring-red-500', 'rounded');
+    // Use Bootstrap button styling
+    removeButton.classList.add('remove-status-button', 'btn', 'btn-outline-danger', 'btn-sm', 'flex-shrink-0');
     removeButton.setAttribute('aria-label', `Remove status ${status.name}`);
 
     // Disable removing if it's the last status remaining
     if (STATUSES.length <= 1) {
       removeButton.disabled = true;
-      removeButton.classList.add('opacity-50', 'cursor-not-allowed');
+      // Bootstrap handles disabled styling automatically
     }
 
     itemDiv.appendChild(emojiButton);
@@ -279,7 +285,8 @@ export function populateEmojiGrid() {
   AVAILABLE_EMOJIS.forEach(emoji => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.classList.add('emoji-choice-btn', 'p-1', 'border', 'border-gray-500', 'rounded', 'hover:bg-gray-600', 'focus:outline-none', 'focus:ring-1', 'focus:ring-indigo-600', 'text-xl');
+    // Use Bootstrap button styling (light background for contrast on dark popup)
+    btn.classList.add('emoji-choice-btn', 'btn', 'btn-light', 'p-1', 'border-secondary', 'fs-5'); // Use font size class
     btn.dataset.emoji = emoji; // Store emoji value in data attribute
     btn.textContent = emoji;
     btn.setAttribute('aria-label', `Select emoji ${emoji}`);
@@ -329,7 +336,7 @@ function openEmojiPopup(buttonElement, statusIndex) {
   // Position horizontally aligned with the button
   emojiSelectPopup.style.left = `${window.scrollX + rect.left}px`;
 
-  emojiSelectPopup.classList.remove('hidden'); // Show the popup
+  emojiSelectPopup.classList.remove('d-none'); // Use d-none to show the popup
 }
 
 /**
@@ -367,12 +374,12 @@ function handleEmojiGridClick(event) {
       }
 
       // 5. Hide Popup regardless of whether the icon changed (user made a selection)
-      popup.classList.add('hidden');
+      popup.classList.add('d-none'); // Use d-none
       delete popup.dataset.editingIndex; // Clear editing state
     } else {
         console.error("Invalid index stored on emoji popup:", popup.dataset.editingIndex);
         // Hide popup even if index was bad
-        popup.classList.add('hidden');
+        popup.classList.add('d-none'); // Use d-none
         delete popup.dataset.editingIndex;
     }
   }
@@ -386,10 +393,11 @@ function handleEmojiGridClick(event) {
  * @param {Event} event - The click event object.
  */
 export function closeEmojiPopupOnClickOutside(event) {
-  if (emojiSelectPopup && !emojiSelectPopup.classList.contains('hidden')) {
+  // Use Bootstrap 'd-none' class for hiding
+  if (emojiSelectPopup && !emojiSelectPopup.classList.contains('d-none')) {
     // Close if the click target is NOT the popup itself OR any emoji button in the legend
     if (!emojiSelectPopup.contains(event.target) && !event.target.closest('.status-emoji-button')) {
-      emojiSelectPopup.classList.add('hidden');
+      emojiSelectPopup.classList.add('d-none'); // Use d-none
       delete emojiSelectPopup.dataset.editingIndex; // Clear editing state
     }
   }

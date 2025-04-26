@@ -3,116 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Roadmap Generator</title>
-    <!-- Font Awesome CDN Removed -->
-    <!-- Link to Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>AI Roadmap Generator</title> <!-- Updated Title -->
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Link to our custom stylesheet -->
     <link rel="stylesheet" href="style.css">
     <!-- html2pdf.js library via CDN (for PDF export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- Note: No additional libraries needed for Word/PPT export as it uses the browser's fetch API -->
 </head>
-<body class="bg-gray-900 font-sans p-8">
+<body class="bg-dark text-light p-3" data-bs-theme="dark"> <!-- Added Bootstrap dark theme -->
 
-    <div class="max-w-4xl mx-auto bg-gray-800 border border-gray-700 p-6 rounded-lg shadow-md relative">
-        <!-- Theme Toggle Switch Removed -->
+    <div class="container bg-dark border border-secondary p-4 rounded shadow position-relative"> <!-- Increased padding to p-4 -->
 
-        <h1 class="text-2xl font-bold text-gray-100 mb-6">Product Roadmap Generator</h1>
+        <h1 class="h2 fw-bold text-light mb-4 text-center">AI Product Roadmap Generator</h1> <!-- Centered Heading -->
 
-        <!-- User Input Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end">
-            <!-- New Roadmap Name Input -->
-            <div>
-                <label for="roadmap-name" class="block text-sm font-medium text-gray-300 mb-1">Product Name</label>
-                <input type="text" id="roadmap-name" name="roadmap-name"
-                       class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-indigo-600 focus:border-indigo-600"
-                       placeholder="Enter the name of your Product">
+        <!-- AI Generation Section -->
+        <div class="ai-generation-section border border-secondary rounded p-3 mb-4 bg-secondary bg-opacity-10">
+            <h2 class="h5 fw-semibold mb-3">Generate Roadmap from Idea</h2>
+            <div class="mb-3">
+                <label for="ai-prompt-input" class="form-label small">Describe your project or product idea:</label>
+                <textarea id="ai-prompt-input" class="form-control bg-secondary text-light border-secondary" rows="4" placeholder="e.g., A mobile app to track personal reading habits and recommend new books based on AI analysis..."></textarea>
             </div>
-            <!-- Completion Date and Time Increment Inputs Removed -->
-            <!-- NOTE: Action buttons moved below this closing div -->
-        </div> <!-- End of User Input Section Grid -->
-
-        <!-- Action Buttons Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 mb-4">
-             <!-- Generate Button Wrapper -->
-             <div>
-                 <button id="generate-roadmap"
-                         class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600">
-                     Generate Roadmap
+            <div class="d-flex justify-content-between align-items-center">
+                 <button id="generate-ai-roadmap-btn" type="button" class="btn btn-primary">
+                     <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                     Generate with AI
                  </button>
-             </div>
+                 <div id="ai-status-message" class="small text-muted ms-3 flex-grow-1 text-end"></div>
+            </div>
+        </div>
+
+        <hr class="border-secondary my-4"> <!-- Separator -->
+
+        <!-- Manual Controls Section -->
+        <h2 class="h5 fw-semibold mb-3">Manual Roadmap Controls</h2>
+        <div class="row g-3 mb-3 align-items-end"> <!-- Reduced bottom margin -->
+            <!-- Roadmap Name Input -->
+            <div class="col-md-6"> <!-- Adjusted width -->
+                <label for="roadmap-name" class="form-label mb-1">Product Name</label>
+                <input type="text" id="roadmap-name" name="roadmap-name"
+                       class="form-control bg-secondary text-light border-secondary"
+                       placeholder="Enter or edit the roadmap name">
+            </div>
              <!-- Save Button Wrapper -->
-             <div>
-                 <button id="save-roadmap-button" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600">
+             <div class="col-md-3 col-sm-6"> <!-- Adjusted width -->
+                 <button id="save-roadmap-button" class="w-100 btn btn-secondary">
                      Save Roadmap
                  </button>
              </div>
              <!-- Load Button Wrapper -->
-             <div>
-                 <button id="load-roadmap-button" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-600">
+             <div class="col-md-3 col-sm-6"> <!-- Adjusted width -->
+                 <button id="load-roadmap-button" class="w-100 btn btn-success">
                      Load Saved Roadmap
                  </button>
              </div>
         </div>
 
-        <!-- Status Message Area -->
-        <div class="text-right mb-4 -mt-2">
-             <span id="saveLoadStatus" class="text-sm text-gray-400"></span> <!-- Status message area -->
+        <!-- Status Message Area for Save/Load -->
+        <div class="text-end mb-4 mt-n1">
+             <span id="saveLoadStatus" class="small text-muted"></span>
         </div>
 
-        <!-- Export Buttons Section - Initially hidden, shown after generation -->
-        <!-- These buttons use third-party APIs for conversion, requiring API keys and network requests -->
-        <div id="export-buttons-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 hidden">
-             <div>
-                <button id="export-pdf"
-                        class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600">
+        <!-- Export Buttons Section - Initially hidden -->
+        <div id="export-buttons-container" class="row g-3 mb-4 d-none">
+             <h3 class="h6 fw-semibold text-light col-12 mb-0 mt-2">Export Options</h3> <!-- Added heading -->
+             <div class="col-sm-4">
+                <button id="export-pdf" class="w-100 btn btn-success">
                     Export as PDF
                 </button>
             </div>
-             <div>
-                 <!-- Export as Word (.docx) - Uses external API -->
-                <button id="export-word"
-                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600">
+             <div class="col-sm-4">
+                <button id="export-word" class="w-100 btn btn-primary">
                     Export as Word (.docx)
                 </button>
             </div>
-             <div>
-                 <!-- Export as PowerPoint (.pptx) - Uses external API -->
-                <button id="export-ppt"
-                        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-600">
+             <div class="col-sm-4">
+                <button id="export-ppt" class="w-100 btn btn-warning">
                     Export as PowerPoint (.pptx)
                 </button>
             </div>
         </div>
 
-        <!-- Wrapper Div for PDF Export Content (and source for API exports) -->
+        <!-- Wrapper Div for PDF Export Content -->
         <div id="exportable-content">
             <!-- Editable Status Legend -->
-            <div id="status-legend" class="mb-6 p-4 bg-gray-700/50 rounded border border-gray-600">
-                <div class="status-legend-header flex justify-between items-center mb-2">
-                     <h3 class="text-sm font-semibold text-gray-300">Status Legend (Editable):</h3>
-                     <button id="add-status-button" type="button" class="text-sm bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600">
+            <div id="status-legend" class="mb-4 p-3 bg-secondary bg-opacity-25 rounded border border-secondary">
+                <div class="status-legend-header d-flex justify-content-between align-items-center mb-2">
+                     <h3 class="h6 fw-semibold text-light">Status Legend (Editable):</h3>
+                     <button id="add-status-button" type="button" class="btn btn-success btn-sm">
                          + Add Status
                      </button>
                 </div>
                 <div id="editable-status-list">
-                    <!-- Status items will be dynamically inserted here by script.js -->
+                    <!-- Status items will be dynamically inserted here -->
                 </div>
-                <!-- Button moved to the header div above -->
             </div>
 
             <!-- Button to add a new milestone -->
             <div class="text-center my-4">
-                <button id="add-milestone-btn"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"> <!-- Updated ID, text, styling, removed 'hidden' -->
-                    Add Milestone
+                <button id="add-milestone-btn" class="btn btn-primary d-none"> <!-- Initially hidden -->
+                    + Add Milestone Manually
                 </button>
             </div>
 
             <!-- Output Container for Dynamic Roadmap -->
-            <!-- This is the primary content source for Word/PPT API export -->
-            <div id="roadmap-output" class="space-y-6">
+            <div id="roadmap-output" class="position-relative"> <!-- Added position-relative for placeholder centering if needed -->
+                <!-- Roadmap Placeholder -->
+                <div id="roadmap-placeholder" class="d-none text-center text-muted p-5 border border-secondary border-dashed rounded mt-4">
+                    <p class="mb-0">Your generated or manually added roadmap milestones will appear here.</p>
+                    <p class="small mb-0">Use the AI generator above or the "Add Milestone" button (which appears after loading/generating) to get started.</p>
+                </div>
                 <!-- Roadmap segments will be dynamically inserted here -->
             </div>
         </div> <!-- End of exportable-content wrapper -->
@@ -120,12 +121,16 @@
     </div>
 
     <!-- Emoji Select Popup (Hidden Initially) -->
-    <div id="emoji-select-popup" class="hidden absolute bg-gray-700 border border-gray-600 rounded shadow-lg p-2 z-50">
-        <div class="emoji-grid grid grid-cols-4 gap-1 max-w-xs max-h-48 overflow-y-auto">
-            <!-- Emoji buttons will be populated here by statusManager.js -->
+    <div id="emoji-select-popup" class="d-none position-absolute bg-dark border border-secondary rounded shadow p-2 z-index-1">
+        <div class="emoji-grid d-grid gap-1 overflow-y-auto" style="grid-template-columns: repeat(4, 1fr); max-width: 150px; max-height: 200px;">
+            <!-- Emoji buttons will be populated here -->
         </div>
     </div>
 
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- SortableJS Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" integrity="sha512-Eezs+g9Lq4TCCq0wae01s9PuNWzHYoCMkE97e2qdkYthpI0pzC3UGB03lgEHn2XM85hDOUF6qgqqszs+iXU4UA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- Link to the JavaScript file -->
     <script type="module" src="script.js"></script>
 </body>

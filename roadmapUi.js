@@ -165,6 +165,32 @@ function _handleItemDescriptionInput(event) {
   debouncedAutoSave();
 }
 
+/**
+ * Initializes SortableJS on a single items container.
+ * @param {HTMLElement} containerElement - The '.items-container' element.
+ */
+function _initializeSortableOnContainer(containerElement) {
+    if (!containerElement) return;
+
+    // Ensure Sortable library is loaded
+    if (typeof Sortable === 'undefined') {
+        console.error('SortableJS library not loaded.');
+        return;
+    }
+
+    new Sortable(containerElement, {
+        group: 'shared-items', // Allow dragging between milestone lists
+        animation: 150,       // Animation duration
+        handle: '.drag-handle', // Specify the drag handle
+        ghostClass: 'sortable-ghost', // Class for the placeholder
+        chosenClass: 'sortable-chosen', // Class for the dragged item
+        onEnd: function (evt) {
+            // Trigger autosave when an item is dropped (order changed)
+            debouncedAutoSave();
+        }
+    });
+}
+
 
 // --- Core Application Logic ---
 
@@ -229,80 +255,127 @@ export function addMilestoneSection(milestoneData = null) {
  */
 export function createMilestoneElement(milestoneId, milestoneData = null) {
   const milestoneContainer = document.createElement('div');
-  milestoneContainer.classList.add('milestone-section', 'p-4', 'bg-gray-700/50', 'rounded', 'border', 'border-gray-600', 'mb-4');
+  // Use Bootstrap Card component for structure and dark theme styling
+  milestoneContainer.classList.add('milestone-section', 'card', 'bg-dark', 'text-light', 'border-secondary', 'mb-4');
   milestoneContainer.id = milestoneId;
 
-  // --- Milestone Header ---
+  // --- Milestone Header (Card Header) ---
   const headerDiv = document.createElement('div');
-  headerDiv.classList.add('milestone-header', 'mb-3');
+  // Use Card Header for title and dates, add padding and border
+  headerDiv.classList.add('card-header', 'p-3', 'd-flex', 'flex-column', 'flex-md-row', 'justify-content-between', 'align-items-md-center', 'border-bottom', 'border-secondary', 'border-opacity-50');
 
-  // Editable Title
-  const title = document.createElement('h3');
+  // Editable Title (using h4 for card context)
+  const title = document.createElement('h4'); // Changed to h4
   title.contentEditable = "true";
-  title.classList.add('text-lg', 'font-semibold', 'text-gray-100', 'mb-2', 'focus:outline-none', 'focus:ring-1', 'focus:ring-blue-400', 'rounded', 'px-1', '-mx-1');
-  title.textContent = milestoneData?.title || `Milestone ${milestoneId.split('-')[1] || milestoneCounter}`; // Use ID num or counter
+  // Basic styling, make it look like editable text within the header. Added w-100 for better wrapping behavior.
+  title.classList.add('mb-2', 'mb-md-0', 'me-md-3', 'p-1', 'rounded', 'focus-ring', 'focus-ring-primary', 'w-100', 'editable-placeholder'); // Added w-100 and placeholder class
+  title.textContent = milestoneData?.title || ''; // Default to empty for placeholder
+  if (!milestoneData?.title) { // Set default text only if loading data doesn't provide one
+      title.textContent = `Milestone ${milestoneId.split('-')[1] || milestoneCounter}`;
+  }
   title.setAttribute('role', 'textbox');
   title.setAttribute('aria-label', 'Milestone Title');
+  // Placeholder handled by CSS via .editable-placeholder:empty::before
 
-  // --- Dates Container ---
+  // --- Dates Container (within Card Header) ---
   const datesContainer = document.createElement('div');
-  datesContainer.classList.add('milestone-dates', 'mb-3', 'space-y-1', 'md:flex', 'md:space-y-0', 'md:space-x-4', 'md:items-center');
+  // Use flex utilities for layout
+  datesContainer.classList.add('milestone-dates', 'd-flex', 'flex-column', 'flex-sm-row', 'align-items-sm-center', 'gap-2'); // Gap for spacing
 
   // Current Date Input
   const dateLabel = document.createElement('label');
-  dateLabel.classList.add('text-sm', 'text-gray-300', 'block', 'md:inline-block');
-  dateLabel.textContent = 'Target Date: ';
+  dateLabel.classList.add('text-nowrap'); // Prevent label wrapping
+  dateLabel.textContent = 'Target: ';
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
-  dateInput.classList.add('milestone-date', 'w-full', 'md:w-auto', 'px-2', 'py-1', 'border', 'rounded', 'bg-gray-600', 'border-gray-500', 'text-gray-100', 'text-sm', 'focus:outline-none', 'focus:ring-1', 'focus:ring-blue-500');
+  // Use Bootstrap form control styling
+  dateInput.classList.add('milestone-date', 'form-control', 'form-control-sm', 'w-auto', 'bg-secondary', 'text-light', 'border-secondary');
   dateInput.value = milestoneData?.currentCompletionDate || '';
   dateLabel.appendChild(dateInput);
 
   // Original Date Display
   const originalDateSpan = document.createElement('span');
-  originalDateSpan.classList.add('original-date-display', 'text-xs', 'text-gray-400', 'block', 'md:inline-block');
+  // Use Bootstrap text utilities
+  originalDateSpan.classList.add('original-date-display', 'small', 'text-muted', 'text-nowrap');
   const originalDateValue = milestoneData?.originalCompletionDate || '';
   originalDateSpan.dataset.originalDate = originalDateValue; // Store raw value
 
   if (originalDateValue) {
     try {
-      // Add T00:00:00 for reliable cross-browser parsing
       const dateObj = new Date(originalDateValue + 'T00:00:00');
-      // Stricter Validation
       if (isNaN(dateObj.getTime()) || dateObj.getFullYear() < 1900) {
         throw new Error('Invalid or unreasonable date stored');
       }
       const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
       originalDateSpan.textContent = `Original: ${dateObj.toLocaleDateString(undefined, options)}`;
-      originalDateSpan.classList.remove('hidden');
+      // No 'hidden' class needed, Bootstrap handles display
     } catch (e) {
       console.error("Error parsing/formatting stored original date:", originalDateValue, e);
       originalDateSpan.textContent = `Original: (Invalid Date)`;
-      originalDateSpan.classList.remove('hidden'); // Show the error state
     }
   } else {
     originalDateSpan.textContent = 'Original: Not Set';
-    originalDateSpan.classList.add('hidden'); // Hide if not set
+    originalDateSpan.classList.add('d-none'); // Use Bootstrap 'd-none' to hide
   }
 
   datesContainer.appendChild(dateLabel);
   datesContainer.appendChild(originalDateSpan);
 
+  // --- Delete Milestone Button ---
+  const deleteButton = document.createElement('button');
+  deleteButton.className = 'btn btn-outline-danger btn-sm delete-milestone-btn ms-auto'; // ms-auto pushes right
+  deleteButton.title = 'Delete Milestone';
+  deleteButton.innerHTML = '&times;'; // Use HTML entity for 'x'
+  deleteButton.setAttribute('aria-label', 'Delete this milestone');
+
+  // Assemble Header
+  headerDiv.appendChild(title);
+  headerDiv.appendChild(deleteButton); // Add delete button
+  headerDiv.appendChild(datesContainer);
+
+  // --- NEW: Purpose Section (Card Body) ---
+  const purposeBody = document.createElement('div');
+  // Increased padding to p-3
+  purposeBody.classList.add('card-body', 'bg-secondary', 'bg-opacity-10', 'p-3', 'mb-0'); // mb-0 as items container follows
+
+  const purposeLabel = document.createElement('p');
+  purposeLabel.classList.add('fw-bold', 'mb-1', 'small', 'text-muted'); // Label styling seems okay
+  purposeLabel.textContent = 'Purpose:';
+
+  const purposeContent = document.createElement('div'); // Use a div for multi-line potential
+  purposeContent.contentEditable = "true";
+  // Added placeholder class and min-height style
+  purposeContent.classList.add('milestone-purpose', 'p-1', 'rounded', 'focus-ring', 'focus-ring-secondary', 'editable-placeholder');
+  purposeContent.setAttribute('role', 'textbox');
+  purposeContent.setAttribute('aria-label', 'Milestone Purpose');
+  purposeContent.textContent = milestoneData?.purpose || ''; // Load purpose if available
+  purposeContent.style.minHeight = '50px'; // Add minimum height
+  // Placeholder handled by CSS via .editable-placeholder:empty::before
+
+  purposeBody.appendChild(purposeLabel);
+  purposeBody.appendChild(purposeContent);
+
+  // --- Card Body for Items and Add Button ---
+  const itemsBody = document.createElement('div');
+  // Adjusted padding to pt-3, pb-3
+  itemsBody.classList.add('card-body', 'pt-3', 'pb-3');
+
   // --- Add Line Item Button ---
   const addItemButton = document.createElement('button');
   addItemButton.textContent = '+ Add Line Item';
-  addItemButton.classList.add('add-item-btn', 'bg-blue-500', 'hover:bg-blue-600', 'text-white', 'font-bold', 'py-1', 'px-2', 'rounded', 'text-sm', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-blue-600', 'focus:ring-offset-gray-800');
+  // Use Bootstrap button styling
+  addItemButton.classList.add('add-item-btn', 'btn', 'btn-primary', 'btn-sm', 'mb-3');
 
   // --- Line Items Container ---
   const itemsContainer = document.createElement('div');
-  itemsContainer.classList.add('items-container', 'mt-2', 'space-y-2');
+  itemsContainer.classList.add('items-container'); // Remove spacing classes, handled by item margins
 
-  // --- Assemble ---
-  headerDiv.appendChild(title);
+  // --- Assemble Card ---
   milestoneContainer.appendChild(headerDiv);
-  milestoneContainer.appendChild(datesContainer);
-  milestoneContainer.appendChild(addItemButton);
-  milestoneContainer.appendChild(itemsContainer);
+  milestoneContainer.appendChild(purposeBody); // Add Purpose section
+  itemsBody.appendChild(addItemButton); // Add button inside items body
+  itemsBody.appendChild(itemsContainer);
+  milestoneContainer.appendChild(itemsBody); // Add items body
 
   // Populate items if loading data
   if (milestoneData?.items && Array.isArray(milestoneData.items)) {
@@ -313,6 +386,10 @@ export function createMilestoneElement(milestoneId, milestoneData = null) {
     // Ensure dropdowns and icons reflect loaded state
     _updateChecklistItemIconsForMilestone(milestoneContainer); // Update icons after adding all items
   }
+
+  // Initialize SortableJS on the items container for this new milestone
+  const itemsContainerForSortable = milestoneContainer.querySelector('.items-container');
+  _initializeSortableOnContainer(itemsContainerForSortable);
 
   return milestoneContainer;
 }
@@ -325,7 +402,26 @@ export function createMilestoneElement(milestoneId, milestoneData = null) {
  */
 export function createChecklistItemElement(itemData = null) {
   const itemDiv = document.createElement('div');
-  itemDiv.classList.add('checklist-item', 'flex', 'items-center', 'mb-2', 'p-2', 'rounded', 'border', 'bg-gray-700/80', 'border-gray-600');
+  // Option A: Remove background/border, use border-bottom for separation. Add gap-3. Adjust padding.
+  itemDiv.classList.add(
+    'checklist-item',
+    'd-flex',
+    'align-items-center',
+    'py-2', // Vertical padding
+    'px-1', // Horizontal padding
+    'border-bottom', // Bottom border for separation
+    'border-secondary',
+    'border-opacity-50',
+    'gap-3' // Spacing between elements
+   );
+   // Removed mb-2 (handled by container?), rounded, border, bg-secondary, bg-opacity-25, p-2
+
+  // Drag Handle Element
+  const dragHandle = document.createElement('span');
+  dragHandle.classList.add('drag-handle', 'me-2', 'text-muted'); // Bootstrap spacing and color
+  dragHandle.style.cursor = 'grab'; // Set cursor style directly
+  dragHandle.innerHTML = '☰'; // Unicode for "☰"
+  dragHandle.setAttribute('aria-label', 'Drag to reorder');
 
   const statuses = getStatuses();
   // Determine initial status: from itemData, or first status, or default 'Not Started'
@@ -340,13 +436,15 @@ export function createChecklistItemElement(itemData = null) {
 
   // Icon Element (Span for Emoji)
   const itemIcon = document.createElement('span');
-  itemIcon.classList.add('checklist-item-status-icon', 'mr-2', 'flex-shrink-0', 'w-5', 'text-center');
+  // Removed me-2 (using gap now)
+  itemIcon.classList.add('checklist-item-status-icon', 'flex-shrink-0', 'text-center');
   itemIcon.textContent = initialStatusObj.icon;
   itemIcon.setAttribute('aria-label', initialStatusObj.name);
 
   // Status Dropdown
   const statusDropdown = document.createElement('select');
-  statusDropdown.classList.add('status-dropdown', 'border', 'border-gray-500', 'bg-gray-600', 'text-gray-100', 'rounded', 'p-1', 'mr-2', 'text-sm', 'focus:outline-none', 'focus:ring-1', 'focus:ring-blue-500');
+  // Use Bootstrap form select styling. Removed me-2 (using gap now).
+  statusDropdown.classList.add('status-dropdown', 'form-select', 'form-select-sm', 'w-auto', 'bg-secondary', 'text-light', 'border-secondary');
 
   statuses.forEach((status) => {
     const option = document.createElement('option');
@@ -361,17 +459,21 @@ export function createChecklistItemElement(itemData = null) {
   // Description Input
   const descriptionInput = document.createElement('input');
   descriptionInput.type = 'text';
-  descriptionInput.classList.add('item-description', 'border', 'border-gray-500', 'bg-gray-600', 'text-gray-100', 'placeholder-gray-400', 'rounded', 'p-1', 'flex-grow', 'focus:outline-none', 'focus:ring-1', 'focus:ring-blue-500');
+  // Use Bootstrap form control styling
+  descriptionInput.classList.add('item-description', 'form-control', 'form-control-sm', 'flex-grow-1', 'bg-secondary', 'text-light', 'border-secondary'); // flex-grow-1 takes remaining space
   descriptionInput.placeholder = 'Enter task description...';
   descriptionInput.value = itemData?.text || ''; // Populate text from itemData
 
   // Delete Button
   const deleteButton = document.createElement('button');
-  deleteButton.classList.add('delete-item-button', 'ml-2', 'text-red-400', 'hover:text-red-300', 'font-bold', 'px-2', 'flex-shrink-0', 'focus:outline-none', 'focus:ring-1', 'focus:ring-red-500', 'rounded');
+  // Use Bootstrap button styling. Removed ms-2 (using gap now).
+  deleteButton.classList.add('delete-item-button', 'btn', 'btn-outline-danger', 'btn-sm', 'flex-shrink-0'); // Outline danger button
   deleteButton.innerHTML = '&times;'; // Use HTML entity for 'x'
   deleteButton.title = 'Delete Item';
   deleteButton.setAttribute('aria-label', 'Delete this item');
 
+  // Append elements in desired order
+  itemDiv.appendChild(dragHandle); // Add handle first
   itemDiv.appendChild(itemIcon);
   itemDiv.appendChild(statusDropdown);
   itemDiv.appendChild(descriptionInput);
@@ -402,6 +504,18 @@ export function handleRoadmapInteraction(event) {
       _handleDeleteLineItem(target);
       return; // Handled
     }
+    // --- NEW: Handle Delete Milestone Button Click ---
+    if (target.matches('.delete-milestone-btn')) {
+        const milestoneElement = target.closest('.milestone-section');
+        if (milestoneElement) {
+            // Confirmation Dialog
+            if (confirm("Are you sure you want to delete this entire milestone and all its items?")) {
+                milestoneElement.remove(); // Remove from DOM
+                debouncedAutoSave(); // Trigger autosave
+            }
+        }
+        return; // Handled
+    }
   }
 
   // --- Change Events ---
@@ -418,9 +532,19 @@ export function handleRoadmapInteraction(event) {
 
   // --- Input Events ---
   else if (event.type === 'input') {
-    if (target.matches('.milestone-section h3[contenteditable="true"]')) {
+    // Match updated title element (h4)
+    if (target.matches('.milestone-section h4[contenteditable="true"]')) {
       _handleMilestoneTitleInteraction(event);
+      // Toggle placeholder class based on content
+      target.classList.toggle('is-empty', target.textContent.trim() === '');
       return; // Handled
+    }
+    // Match updated purpose element
+    if (target.matches('.milestone-purpose[contenteditable="true"]')) {
+        debouncedAutoSave(); // Also trigger autosave for purpose changes
+        // Toggle placeholder class based on content
+        target.classList.toggle('is-empty', target.textContent.trim() === '');
+        return; // Handled
     }
     if (target.matches('.item-description')) {
       _handleItemDescriptionInput(event);
@@ -430,9 +554,19 @@ export function handleRoadmapInteraction(event) {
 
   // --- Blur Events (using capture in script.js) ---
   else if (event.type === 'blur') {
-    if (target.matches('.milestone-section h3[contenteditable="true"]')) {
+    // Match updated title element (h4)
+    if (target.matches('.milestone-section h4[contenteditable="true"]')) {
       _handleMilestoneTitleInteraction(event); // Trigger save on blur too
+      // Ensure placeholder class is correct on blur
+      target.classList.toggle('is-empty', target.textContent.trim() === '');
       return; // Handled
+    }
+    // Match updated purpose element
+    if (target.matches('.milestone-purpose[contenteditable="true"]')) {
+        debouncedAutoSave(); // Also trigger autosave for purpose changes on blur
+        // Ensure placeholder class is correct on blur
+        target.classList.toggle('is-empty', target.textContent.trim() === '');
+        return; // Handled
     }
     if (target.matches('.milestone-date')) {
       _handleMilestoneDateBlur(event); // Handle setting original date

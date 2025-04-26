@@ -1,0 +1,14 @@
+# Node dependencies (in case you ever run npm here)
+node_modules/
+
+# Environment variables file (less likely needed, but good practice)
+.env
+
+# Operating System generated files #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

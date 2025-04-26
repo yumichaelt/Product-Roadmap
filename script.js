@@ -25,7 +25,8 @@ import {
 } from './exportManager.js';
 
 // --- DOM Element References ---
-const generateButton = document.getElementById('generate-roadmap');
+// General UI
+const generateButton = document.getElementById('generate-roadmap'); // Manual "Start New Roadmap"
 const exportButtonsContainer = document.getElementById('export-buttons-container');
 const exportPdfButton = document.getElementById('export-pdf');
 const exportWordButton = document.getElementById('export-word');
@@ -39,9 +40,17 @@ const roadmapNameInput = document.getElementById('roadmap-name');
 const saveButton = document.getElementById('save-roadmap-button');
 const loadButton = document.getElementById('load-roadmap-button');
 const saveLoadStatusSpan = document.getElementById('saveLoadStatus');
+// AI Related UI
+const aiPromptInput = document.getElementById('ai-prompt-input');
+const generateAiButton = document.getElementById('generate-ai-roadmap-btn');
+const aiButtonSpinner = document.querySelector('#generate-ai-roadmap-btn .spinner-border'); // More specific selector
+const aiStatusMessage = document.getElementById('ai-status-message');
+const roadmapPlaceholder = document.getElementById('roadmap-placeholder');
+
 
 // --- Constants ---
 const ROADMAP_STORAGE_KEY = 'roadmapGeneratorState_v2'; // Key for milestone-based format
+const BACKEND_API_URL = 'http://localhost:3000/api/generate-roadmap';
 
 // --- Utility Functions ---
 
@@ -89,6 +98,34 @@ function updateStatusMessage(message, isError = false, timeout = 3000) {
 }
 
 /**
+ * Updates the AI status message span.
+ * @param {string} message - The message to display.
+ * @param {boolean} [isError=false] - If true, style as an error (red).
+ * @param {number} [timeout=5000] - Duration before clearing the message (0 for persistent).
+ */
+function updateAiStatusMessage(message, isError = false, timeout = 5000) {
+    if (aiStatusMessage) {
+        aiStatusMessage.textContent = message;
+        aiStatusMessage.style.color = isError ? '#dc2626' : 'inherit'; // Tailwind red-600 or default
+        aiStatusMessage.classList.toggle('text-red-600', isError); // Optional: Add class for more styling
+        aiStatusMessage.classList.toggle('text-green-600', !isError && message.includes('generated')); // Green for success
+
+        if (timeout > 0) {
+            setTimeout(() => {
+                if (aiStatusMessage.textContent === message) {
+                    aiStatusMessage.textContent = '';
+                    aiStatusMessage.style.color = 'inherit';
+                    aiStatusMessage.classList.remove('text-red-600', 'text-green-600');
+                }
+            }, timeout);
+        }
+    } else {
+        console.warn("AI status message element not found.");
+    }
+}
+
+
+/**
  * Reads the current state of the roadmap from the DOM (Milestone Structure).
  * @returns {object | null} A serializable object representing the roadmap state, or null if essential elements are missing.
  */
@@ -106,10 +143,11 @@ function getCurrentRoadmapState() {
   const milestoneElements = roadmapOutputDiv.querySelectorAll('.milestone-section');
 
   milestoneElements.forEach((milestoneEl, milestoneIndex) => {
-    const titleEl = milestoneEl.querySelector('h3[contenteditable="true"]');
+    const titleEl = milestoneEl.querySelector('h4[contenteditable="true"]'); // Corrected selector from h3 to h4
     const dateInput = milestoneEl.querySelector('.milestone-date');
     const originalDateSpan = milestoneEl.querySelector('.original-date-display');
     const itemsContainer = milestoneEl.querySelector('.items-container');
+    const purposeEl = milestoneEl.querySelector('.milestone-purpose[contenteditable="true"]'); // Added purpose element query
 
     // Basic validation for essential elements within a milestone
     if (!titleEl || !dateInput || !originalDateSpan || !itemsContainer) {
@@ -122,6 +160,7 @@ function getCurrentRoadmapState() {
     const milestoneData = {
       id: milestoneEl.id,
       title: titleEl.textContent || `Milestone ${milestoneIndex + 1}`, // Use textContent, provide fallback
+      purpose: purposeEl ? purposeEl.textContent : '', // Read purpose text, fallback to empty string
       currentCompletionDate: dateInput.value || '',
       originalCompletionDate: originalDateFromDataset,
       items: []
@@ -188,6 +227,109 @@ function performSave(isAutoSave = false) {
   }
 }
 
+// --- AI Roadmap Generation ---
+
+/**
+ * Handles the click event for the "Generate with AI" button.
+ * Fetches roadmap data from the backend based on user input.
+ */
+async function handleGenerateAiRoadmap() {
+    if (!aiPromptInput || !generateAiButton || !aiButtonSpinner || !aiStatusMessage || !roadmapOutputDiv || !roadmapPlaceholder || !roadmapNameInput) {
+        console.error("AI generation cannot proceed: One or more required UI elements are missing.");
+        updateAiStatusMessage("Internal error: UI elements missing.", true);
+        return;
+    }
+
+    const projectDescription = aiPromptInput.value.trim();
+
+    // 1. Input Validation
+    if (!projectDescription) {
+        updateAiStatusMessage("Please enter a project description first.", true, 3000);
+        aiPromptInput.focus();
+        return;
+    }
+
+    // 2. Set Loading State
+    generateAiButton.disabled = true;
+    aiButtonSpinner.classList.remove('d-none'); // Show spinner
+    updateAiStatusMessage("Generating roadmap with AI...", false, 0); // Persistent message
+
+    try {
+        // 3. Fetch Call
+        const response = await fetch(BACKEND_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ projectDescription: projectDescription }),
+        });
+
+        // 4. Handle Response
+        if (response.ok) {
+            const data = await response.json();
+
+            // --- Success ---
+            console.log("AI Response Data:", data);
+
+            // Clear Existing Roadmap (if user confirms)
+            if (roadmapOutputDiv.children.length > 0) {
+                if (!confirm("Generating with AI will replace the current roadmap. Continue?")) {
+                    updateAiStatusMessage("AI generation cancelled.", false);
+                    return; // Exit if user cancels
+                }
+            }
+            roadmapOutputDiv.innerHTML = ''; // Clear current roadmap UI
+
+            // Hide Placeholder
+            roadmapPlaceholder.classList.add('d-none');
+
+            // Render New Roadmap
+            roadmapNameInput.value = data.roadmapName || 'AI Generated Roadmap'; // Set name
+
+            if (data.milestones && Array.isArray(data.milestones)) {
+                data.milestones.forEach(milestoneData => {
+                    addMilestoneSection(milestoneData); // Render each milestone
+                });
+            } else {
+                console.warn("AI response missing milestones array.");
+                updateAiStatusMessage("AI generated data, but it seems incomplete (no milestones).", true);
+            }
+
+            updateAiStatusMessage("Roadmap generated successfully!", false, 5000); // Success message
+
+            // Save the new state
+            debouncedAutoSave();
+
+        } else {
+            // --- Backend Error ---
+            let errorMsg = 'Unknown backend error occurred.';
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.error || `Server responded with status ${response.status}`;
+                console.error("Backend Error Response:", errorData);
+            } catch (e) {
+                console.error("Could not parse backend error response:", e);
+                errorMsg = `Server responded with status ${response.status}, but error details couldn't be read.`;
+            }
+            updateAiStatusMessage(errorMsg, true); // Show backend error
+        }
+
+    } catch (error) {
+        // --- Network/Fetch Error ---
+        console.error("Error fetching AI roadmap:", error);
+        updateAiStatusMessage("Network error or server unreachable. Please check the backend server.", true);
+    } finally {
+        // 5. Reset Loading State
+        generateAiButton.disabled = false;
+        aiButtonSpinner.classList.add('d-none'); // Hide spinner
+        // Clear persistent "Generating..." message only if no other message replaced it
+        if (aiStatusMessage.textContent === "Generating roadmap with AI...") {
+             updateAiStatusMessage('', false, 0); // Clear it
+        }
+    }
+}
+
+
 /**
  * Handles the click event for the manual save button.
  */
@@ -204,12 +346,12 @@ export const debouncedAutoSave = debounce(() => {
 
 /**
  * Renders the roadmap UI based on loaded milestone data.
- * Includes validation for the data format.
+ * Includes validation for the data format and placeholder visibility.
  * @param {object} data - The roadmap state object loaded from storage.
  * @returns {boolean} True if rendering was successful, false otherwise.
  */
 function renderRoadmapFromData(data) {
-  if (!roadmapNameInput || !roadmapOutputDiv || !addMilestoneBtn || !exportButtonsContainer) {
+  if (!roadmapNameInput || !roadmapOutputDiv || !addMilestoneBtn || !exportButtonsContainer || !roadmapPlaceholder) {
     console.error("Cannot render from data: Required UI elements not found.");
     return false;
   }
@@ -262,7 +404,8 @@ function renderRoadmapFromData(data) {
     exportButtonsContainer.classList.add('hidden');
     addMilestoneBtn.classList.add('hidden');
     // Consider adding a placeholder message in roadmapOutputDiv?
-    // roadmapOutputDiv.innerHTML = '<p class="text-gray-500 text-center p-4">No milestones yet. Click "Add Milestone" to start.</p>';
+    // Show placeholder if no milestones
+    roadmapPlaceholder.classList.remove('d-none');
   }
 
   return true; // Indicate success
@@ -277,11 +420,12 @@ function loadRoadmapState() {
 
   if (!stateJson) {
     updateStatusMessage("No saved data found.", false);
-    // Clear the roadmap area if nothing is loaded
+    // Clear the roadmap area and show placeholder if nothing is loaded
     roadmapOutputDiv.innerHTML = '';
     roadmapNameInput.value = '';
     exportButtonsContainer.classList.add('hidden');
     addMilestoneBtn.classList.add('hidden');
+    if (roadmapPlaceholder) roadmapPlaceholder.classList.remove('d-none'); // Show placeholder
     return;
   }
 
@@ -294,21 +438,23 @@ function loadRoadmapState() {
     } else {
       // renderRoadmapFromData handles specific alerts for incompatible/invalid data
       updateStatusMessage("Load failed.", true); // General failure message
-      // Clear the UI if loading failed after parsing (redundant but safe)
+      // Clear the UI and show placeholder if loading failed after parsing
       roadmapOutputDiv.innerHTML = '';
       roadmapNameInput.value = '';
       exportButtonsContainer.classList.add('hidden');
       addMilestoneBtn.classList.add('hidden');
+      if (roadmapPlaceholder) roadmapPlaceholder.classList.remove('d-none'); // Show placeholder
     }
   } catch (error) {
     updateStatusMessage("Error loading data!", true);
     console.error("Error parsing roadmap state (v2) from localStorage:", error);
     alert("Error parsing saved data. It might be corrupted. See console for details.");
-    // Clear the UI on parsing error
+    // Clear the UI and show placeholder on parsing error
     roadmapOutputDiv.innerHTML = '';
     roadmapNameInput.value = '';
     exportButtonsContainer.classList.add('hidden');
     addMilestoneBtn.classList.add('hidden');
+    if (roadmapPlaceholder) roadmapPlaceholder.classList.remove('d-none'); // Show placeholder
   }
 }
 
@@ -327,9 +473,10 @@ function attemptAutoLoad() {
     // Use loadRoadmapState which includes parsing, validation, rendering, and feedback
     loadRoadmapState();
   } else {
-    // No saved roadmap state found, ensure buttons are hidden
+    // No saved roadmap state found, ensure buttons are hidden and placeholder is shown
     exportButtonsContainer.classList.add('hidden');
     addMilestoneBtn.classList.add('hidden');
+    if (roadmapPlaceholder) roadmapPlaceholder.classList.remove('d-none'); // Show placeholder
   }
 }
 
@@ -343,6 +490,11 @@ function initializeApp() {
   // Ensure export/add buttons are hidden initially (attemptAutoLoad will show them if needed)
   if (exportButtonsContainer) exportButtonsContainer.classList.add('hidden');
   if (addMilestoneBtn) addMilestoneBtn.classList.add('hidden');
+  // Ensure placeholder is hidden initially (attemptAutoLoad will show it if needed)
+  if (roadmapPlaceholder) roadmapPlaceholder.classList.add('d-none');
+  // Ensure AI spinner is hidden initially
+  if (aiButtonSpinner) aiButtonSpinner.classList.add('d-none');
+
 
   // --- Attach Event Listeners ---
 
@@ -356,10 +508,11 @@ function initializeApp() {
         }
       }
       generateRoadmap(); // Call the UI function to clear and add the first milestone
+      if (roadmapPlaceholder) roadmapPlaceholder.classList.add('d-none'); // Hide placeholder on manual start
       debouncedAutoSave(); // Save the initial state
     });
   } else {
-    console.error("Generate roadmap button element not found.");
+    console.error("Manual 'Start New Roadmap' button element not found.");
   }
 
   // Add Milestone Button
@@ -423,8 +576,23 @@ function initializeApp() {
       roadmapNameInput.addEventListener('input', debouncedAutoSave);
   }
 
+  // Listener for AI Generate Button
+  if (generateAiButton) {
+      generateAiButton.addEventListener('click', handleGenerateAiRoadmap);
+  } else {
+      console.error("Generate AI button element not found.");
+  }
+
   // Attempt to auto-load saved state AFTER setting up listeners
   attemptAutoLoad();
+
+  // Final check for placeholder visibility after load attempt
+  if (roadmapPlaceholder && roadmapOutputDiv && roadmapOutputDiv.children.length === 0) {
+      roadmapPlaceholder.classList.remove('d-none');
+  } else if (roadmapPlaceholder) {
+      roadmapPlaceholder.classList.add('d-none');
+  }
+
 }
 
 // --- Start the App ---
