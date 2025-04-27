@@ -1,0 +1,25 @@
+{
+  "name": "roadmap",
+  "version": "1.0.0",
+  "main": "config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile:sass": "sass scss/custom_theme.scss css/custom_theme.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yumichaelt/Product-Roadmap.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yumichaelt/Product-Roadmap/issues"
+  },
+  "homepage": "https://github.com/yumichaelt/Product-Roadmap#readme",
+  "description": "",
+  "devDependencies": {
+    "bootstrap": "^5.3.5",
+    "sass": "^1.87.0"
+  }
+}

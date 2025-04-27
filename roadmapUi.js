@@ -255,20 +255,20 @@ export function addMilestoneSection(milestoneData = null) {
  */
 export function createMilestoneElement(milestoneId, milestoneData = null) {
   const milestoneContainer = document.createElement('div');
-  // Use Bootstrap Card component for structure and dark theme styling
-  milestoneContainer.classList.add('milestone-section', 'card', 'bg-dark', 'text-light', 'border-secondary', 'mb-4');
+  // Updated classes for card layout (use default border, keep shadow)
+  milestoneContainer.classList.add('milestone-section', 'card', 'mb-4', 'border', 'shadow-sm'); // Changed border-light to border
   milestoneContainer.id = milestoneId;
 
   // --- Milestone Header (Card Header) ---
   const headerDiv = document.createElement('div');
-  // Use Card Header for title and dates, add padding and border
-  headerDiv.classList.add('card-header', 'p-3', 'd-flex', 'flex-column', 'flex-md-row', 'justify-content-between', 'align-items-md-center', 'border-bottom', 'border-secondary', 'border-opacity-50');
+  // Updated classes for card header layout (removed bg-white)
+  headerDiv.classList.add('card-header', 'p-3', 'd-flex', 'flex-wrap', 'justify-content-between', 'align-items-center');
 
-  // Editable Title (using h4 for card context)
-  const title = document.createElement('h4'); // Changed to h4
+  // Editable Title (changed to h3, updated classes)
+  const title = document.createElement('h3'); // Changed to h3
   title.contentEditable = "true";
-  // Basic styling, make it look like editable text within the header. Added w-100 for better wrapping behavior.
-  title.classList.add('mb-2', 'mb-md-0', 'me-md-3', 'p-1', 'rounded', 'focus-ring', 'focus-ring-primary', 'w-100', 'editable-placeholder'); // Added w-100 and placeholder class
+  // Updated classes for title styling and layout
+  title.classList.add('h5', 'mb-0', 'p-1', 'editable-placeholder', 'flex-grow-1', 'me-2', 'border'); // Added border
   title.textContent = milestoneData?.title || ''; // Default to empty for placeholder
   if (!milestoneData?.title) { // Set default text only if loading data doesn't provide one
       title.textContent = `Milestone ${milestoneId.split('-')[1] || milestoneCounter}`;
@@ -277,19 +277,24 @@ export function createMilestoneElement(milestoneId, milestoneData = null) {
   title.setAttribute('aria-label', 'Milestone Title');
   // Placeholder handled by CSS via .editable-placeholder:empty::before
 
-  // --- Dates Container (within Card Header) ---
+  // --- Right Group for Dates and Delete Button ---
+  const headerRightGroup = document.createElement('div');
+  headerRightGroup.classList.add('d-flex', 'align-items-center', 'gap-3', 'ms-md-auto'); // Flex, align, gap, push right on medium+
+
+  // --- Dates Container (within Right Group) ---
   const datesContainer = document.createElement('div');
   // Use flex utilities for layout
   datesContainer.classList.add('milestone-dates', 'd-flex', 'flex-column', 'flex-sm-row', 'align-items-sm-center', 'gap-2'); // Gap for spacing
 
   // Current Date Input
   const dateLabel = document.createElement('label');
-  dateLabel.classList.add('text-nowrap'); // Prevent label wrapping
+  dateLabel.classList.add('text-nowrap', 'small'); // Prevent label wrapping, smaller text
   dateLabel.textContent = 'Target: ';
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
-  // Use Bootstrap form control styling
-  dateInput.classList.add('milestone-date', 'form-control', 'form-control-sm', 'w-auto', 'bg-secondary', 'text-light', 'border-secondary');
+  // Updated classes for date input styling
+  dateInput.classList.add('milestone-date', 'form-control', 'form-control-sm', 'w-auto', 'border-0', 'bg-transparent', 'p-0');
+  dateInput.style.boxShadow = 'none'; // Remove default focus shadow
   dateInput.value = milestoneData?.currentCompletionDate || '';
   dateLabel.appendChild(dateInput);
 
@@ -321,22 +326,25 @@ export function createMilestoneElement(milestoneId, milestoneData = null) {
   datesContainer.appendChild(dateLabel);
   datesContainer.appendChild(originalDateSpan);
 
-  // --- Delete Milestone Button ---
+  // --- Delete Milestone Button (within Right Group) ---
   const deleteButton = document.createElement('button');
-  deleteButton.className = 'btn btn-outline-danger btn-sm delete-milestone-btn ms-auto'; // ms-auto pushes right
+  deleteButton.className = 'btn-close delete-milestone-btn'; // Use Bootstrap close button style
   deleteButton.title = 'Delete Milestone';
-  deleteButton.innerHTML = '&times;'; // Use HTML entity for 'x'
+  // deleteButton.innerHTML = '&times;'; // btn-close provides its own icon
   deleteButton.setAttribute('aria-label', 'Delete this milestone');
+
+  // Assemble Right Group
+  headerRightGroup.appendChild(datesContainer);
+  headerRightGroup.appendChild(deleteButton);
 
   // Assemble Header
   headerDiv.appendChild(title);
-  headerDiv.appendChild(deleteButton); // Add delete button
-  headerDiv.appendChild(datesContainer);
+  headerDiv.appendChild(headerRightGroup); // Add the right group
 
-  // --- NEW: Purpose Section (Card Body) ---
+  // --- Purpose Section (Card Body) ---
   const purposeBody = document.createElement('div');
-  // Increased padding to p-3
-  purposeBody.classList.add('card-body', 'bg-secondary', 'bg-opacity-10', 'p-3', 'mb-0'); // mb-0 as items container follows
+  // Updated classes for purpose section styling
+  purposeBody.classList.add('card-body', 'p-3', 'bg-pale-dogwood', 'border-top', 'border-light'); // Use bg-pale-dogwood
 
   const purposeLabel = document.createElement('p');
   purposeLabel.classList.add('fw-bold', 'mb-1', 'small', 'text-muted'); // Label styling seems okay
@@ -344,12 +352,12 @@ export function createMilestoneElement(milestoneId, milestoneData = null) {
 
   const purposeContent = document.createElement('div'); // Use a div for multi-line potential
   purposeContent.contentEditable = "true";
-  // Added placeholder class and min-height style
-  purposeContent.classList.add('milestone-purpose', 'p-1', 'rounded', 'focus-ring', 'focus-ring-secondary', 'editable-placeholder');
+  // Updated classes for purpose content styling
+  purposeContent.classList.add('milestone-purpose', 'p-1', 'editable-placeholder', 'border'); // Added border
   purposeContent.setAttribute('role', 'textbox');
   purposeContent.setAttribute('aria-label', 'Milestone Purpose');
   purposeContent.textContent = milestoneData?.purpose || ''; // Load purpose if available
-  purposeContent.style.minHeight = '50px'; // Add minimum height
+  purposeContent.style.minHeight = '40px'; // Adjusted minimum height
   // Placeholder handled by CSS via .editable-placeholder:empty::before
 
   purposeBody.appendChild(purposeLabel);
@@ -357,18 +365,18 @@ export function createMilestoneElement(milestoneId, milestoneData = null) {
 
   // --- Card Body for Items and Add Button ---
   const itemsBody = document.createElement('div');
-  // Adjusted padding to pt-3, pb-3
-  itemsBody.classList.add('card-body', 'pt-3', 'pb-3');
+  // Updated classes for items body padding
+  itemsBody.classList.add('card-body', 'p-3');
 
   // --- Add Line Item Button ---
   const addItemButton = document.createElement('button');
   addItemButton.textContent = '+ Add Line Item';
-  // Use Bootstrap button styling
-  addItemButton.classList.add('add-item-btn', 'btn', 'btn-primary', 'btn-sm', 'mb-3');
+  // Updated classes for add item button styling (changed to btn-dark)
+  addItemButton.classList.add('add-item-btn', 'btn', 'btn-dark', 'btn-sm', 'mb-3');
 
   // --- Line Items Container ---
   const itemsContainer = document.createElement('div');
-  itemsContainer.classList.add('items-container'); // Remove spacing classes, handled by item margins
+  itemsContainer.classList.add('items-container'); // No changes needed here
 
   // --- Assemble Card ---
   milestoneContainer.appendChild(headerDiv);
@@ -402,24 +410,23 @@ export function createMilestoneElement(milestoneId, milestoneData = null) {
  */
 export function createChecklistItemElement(itemData = null) {
   const itemDiv = document.createElement('div');
-  // Option A: Remove background/border, use border-bottom for separation. Add gap-3. Adjust padding.
+  // Updated classes for checklist item layout
   itemDiv.classList.add(
     'checklist-item',
     'd-flex',
-    'align-items-center',
-    'py-2', // Vertical padding
-    'px-1', // Horizontal padding
-    'border-bottom', // Bottom border for separation
-    'border-secondary',
-    'border-opacity-50',
-    'gap-3' // Spacing between elements
+    'align-items-start', // Align items to the start (top)
+    'py-3', // Increased vertical padding
+    'gap-2', // Reduced gap
+    'border-bottom', // Keep bottom border
+    'border-light' // Lighter border color
    );
-   // Removed mb-2 (handled by container?), rounded, border, bg-secondary, bg-opacity-25, p-2
+   // Removed px-1, border-secondary, border-opacity-50, gap-3
 
   // Drag Handle Element
   const dragHandle = document.createElement('span');
-  dragHandle.classList.add('drag-handle', 'me-2', 'text-muted'); // Bootstrap spacing and color
-  dragHandle.style.cursor = 'grab'; // Set cursor style directly
+  // Updated classes for drag handle
+  dragHandle.classList.add('drag-handle', 'text-muted', 'pt-1'); // Removed me-2, added pt-1 for alignment
+  dragHandle.style.cursor = 'grab'; // Keep cursor style
   dragHandle.innerHTML = '☰'; // Unicode for "☰"
   dragHandle.setAttribute('aria-label', 'Drag to reorder');
 
@@ -436,15 +443,17 @@ export function createChecklistItemElement(itemData = null) {
 
   // Icon Element (Span for Emoji)
   const itemIcon = document.createElement('span');
-  // Removed me-2 (using gap now)
-  itemIcon.classList.add('checklist-item-status-icon', 'flex-shrink-0', 'text-center');
+  // Updated classes and styles for icon
+  itemIcon.classList.add('checklist-item-status-icon', 'pt-1'); // Removed flex-shrink-0, text-center, added pt-1
+  itemIcon.style.width = '20px'; // Fixed width
+  itemIcon.style.textAlign = 'center'; // Center text within fixed width
   itemIcon.textContent = initialStatusObj.icon;
   itemIcon.setAttribute('aria-label', initialStatusObj.name);
 
   // Status Dropdown
   const statusDropdown = document.createElement('select');
-  // Use Bootstrap form select styling. Removed me-2 (using gap now).
-  statusDropdown.classList.add('status-dropdown', 'form-select', 'form-select-sm', 'w-auto', 'bg-secondary', 'text-light', 'border-secondary');
+  // Updated classes for status dropdown
+  statusDropdown.classList.add('status-dropdown', 'form-select', 'form-select-sm', 'w-auto', 'border-0', 'bg-light', 'pe-4'); // Removed text-light, border-secondary, bg-secondary. Added border-0, bg-light, pe-4 for spacing
 
   statuses.forEach((status) => {
     const option = document.createElement('option');
@@ -459,24 +468,24 @@ export function createChecklistItemElement(itemData = null) {
   // Description Input
   const descriptionInput = document.createElement('input');
   descriptionInput.type = 'text';
-  // Use Bootstrap form control styling
-  descriptionInput.classList.add('item-description', 'form-control', 'form-control-sm', 'flex-grow-1', 'bg-secondary', 'text-light', 'border-secondary'); // flex-grow-1 takes remaining space
+  // Updated classes for description input (use standard form-control for border)
+  descriptionInput.classList.add('item-description', 'form-control', 'form-control-sm', 'flex-grow-1'); // Add back standard form control styles
   descriptionInput.placeholder = 'Enter task description...';
   descriptionInput.value = itemData?.text || ''; // Populate text from itemData
 
   // Delete Button
   const deleteButton = document.createElement('button');
-  // Use Bootstrap button styling. Removed ms-2 (using gap now).
-  deleteButton.classList.add('delete-item-button', 'btn', 'btn-outline-danger', 'btn-sm', 'flex-shrink-0'); // Outline danger button
+  // Updated classes for delete button (link style)
+  deleteButton.classList.add('delete-item-button', 'btn', 'btn-link', 'text-danger', 'text-decoration-none', 'p-0', 'pt-1'); // Link style, red text, no underline, padding adjustment
   deleteButton.innerHTML = '&times;'; // Use HTML entity for 'x'
   deleteButton.title = 'Delete Item';
   deleteButton.setAttribute('aria-label', 'Delete this item');
 
-  // Append elements in desired order
-  itemDiv.appendChild(dragHandle); // Add handle first
+  // Append elements in desired order: Handle, Icon, Input (Description), Dropdown, Button
+  itemDiv.appendChild(dragHandle);
   itemDiv.appendChild(itemIcon);
+  itemDiv.appendChild(descriptionInput); // Description before dropdown
   itemDiv.appendChild(statusDropdown);
-  itemDiv.appendChild(descriptionInput);
   itemDiv.appendChild(deleteButton);
 
   return itemDiv;
@@ -532,8 +541,8 @@ export function handleRoadmapInteraction(event) {
 
   // --- Input Events ---
   else if (event.type === 'input') {
-    // Match updated title element (h4)
-    if (target.matches('.milestone-section h4[contenteditable="true"]')) {
+    // Match updated title element (h3)
+    if (target.matches('.milestone-section h3[contenteditable="true"]')) {
       _handleMilestoneTitleInteraction(event);
       // Toggle placeholder class based on content
       target.classList.toggle('is-empty', target.textContent.trim() === '');
@@ -554,8 +563,8 @@ export function handleRoadmapInteraction(event) {
 
   // --- Blur Events (using capture in script.js) ---
   else if (event.type === 'blur') {
-    // Match updated title element (h4)
-    if (target.matches('.milestone-section h4[contenteditable="true"]')) {
+    // Match updated title element (h3)
+    if (target.matches('.milestone-section h3[contenteditable="true"]')) {
       _handleMilestoneTitleInteraction(event); // Trigger save on blur too
       // Ensure placeholder class is correct on blur
       target.classList.toggle('is-empty', target.textContent.trim() === '');

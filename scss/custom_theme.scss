@@ -1,0 +1,45 @@
+// 1. Import custom variables FIRST
+@import "custom_variables";
+
+// 2. Import all of Bootstrap
+@import "../node_modules/bootstrap/scss/bootstrap"; // Adjust path if needed
+
+// Custom Utility Classes
+.bg-pale-dogwood {
+  background-color: $pale-dogwood !important; // Use !important for safety
+}
+.bg-tiffany-tint {
+  background-color: $tiffany-blue-tint !important;
+}
+
+// 3. Add any minor custom *non-color* tweaks AFTER Bootstrap imports if necessary (try to avoid)
+// Example (if needed):
+// .milestone-purpose { min-height: 40px; }
+
+// Ensure editable placeholders have a visual cue when empty
+.editable-placeholder:empty::before {
+  content: attr(aria-label) " ..."; // Use aria-label for placeholder text
+  color: var(--bs-secondary-color); // Use Bootstrap's secondary text color
+  font-style: italic;
+  cursor: text;
+}
+
+// Ensure focus ring is visible on editable placeholders
+.editable-placeholder:focus {
+  outline: none; // Remove default outline
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25); // Use Bootstrap's focus ring style
+  border-radius: var(--bs-border-radius); // Match Bootstrap's border radius
+}
+
+// Style for SortableJS ghost element
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: #eee; // Light grey background for placeholder
+}
+
+// Style for SortableJS chosen element (the item being dragged)
+.sortable-chosen {
+  cursor: grabbing !important; // Change cursor while dragging
+  // Optional: Add a subtle visual cue like a box shadow
+  // box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}

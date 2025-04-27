@@ -1,0 +1,47 @@
+@use "sass:color"; // Import the color module
+
+// Custom Palette
+$caribbean-current: #006d77;
+$tiffany-blue: #83c5be;
+$alice-blue: #edf6f9;
+$pale-dogwood: #ffddd2;
+$atomic-tangerine: #e29578;
+$tiffany-blue-tint: color.mix(white, $tiffany-blue, 85%); // Very light blue/green tint (using color.mix)
+
+// Bootstrap Variable Overrides
+$primary: $atomic-tangerine;
+$secondary: $tiffany-blue;
+$light: $alice-blue; // Use alice-blue for $light theme color
+$dark: $caribbean-current; // Use caribbean-current for $dark theme color
+
+// Body & Text
+$body-bg: $alice-blue;
+$body-color: $caribbean-current;
+$headings-color: $caribbean-current; // Headings match body text
+
+// Links
+$link-color: $caribbean-current;
+// $link-hover-color: darken($link-color, 10%); // Example hover
+
+// Borders (use a tint of the dark color for better contrast on alice-blue)
+$border-color: tint-color($dark, 70%); // Light greyish teal, adjust percentage (60-75) if needed
+$border-color-translucent: rgba($caribbean-current, 0.175); // Example using dark color alpha
+
+// Components
+$card-bg: $alice-blue; // Match page background
+$card-border-color: $border-color; // Use updated border color
+$card-header-bg: $alice-blue; // Match card background
+$card-cap-bg: $card-header-bg; // Alias for header bg
+
+$input-bg: #fff;
+$input-border-color: $border-color; // Use updated border color
+$form-select-bg: $input-bg;
+$form-select-border-color: $border-color; // Use updated border color (was $input-border-color)
+
+// Define button text colors for light backgrounds if needed
+// Bootstrap's color-contrast() function usually handles this, but check output.
+// $btn-color: color-contrast($primary); // Ensure text on primary buttons is readable
+// $btn-secondary-color: color-contrast($secondary);
+
+// Example: Use pale-dogwood for a subtle alternate background if needed
+$subtle-bg: $pale-dogwood;

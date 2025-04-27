@@ -21,7 +21,7 @@ function getFormattedRoadmapHtmlBody() {
   const statuses = getStatuses(); // Get current statuses for lookup
 
   milestoneSections.forEach(section => {
-    const titleElement = section.querySelector('h3[contenteditable="true"]');
+    const titleElement = section.querySelector('h3[contenteditable="true"]'); // Updated selector to h3
     const dateInputElement = section.querySelector('.milestone-date');
     const originalDateSpan = section.querySelector('.original-date-display');
     const itemsContainer = section.querySelector('.items-container');

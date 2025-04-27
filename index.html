@@ -4,51 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Roadmap Generator</title> <!-- Updated Title -->
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <!-- Link to our custom stylesheet -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Custom Bootstrap Theme CSS -->
+    <link rel="stylesheet" href="css/custom_theme.css">
     <!-- html2pdf.js library via CDN (for PDF export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- Note: No additional libraries needed for Word/PPT export as it uses the browser's fetch API -->
 </head>
-<body class="bg-dark text-light p-3" data-bs-theme="dark"> <!-- Added Bootstrap dark theme -->
+<body class="p-3"> <!-- Removed dark theme, kept padding -->
 
-    <div class="container bg-dark border border-secondary p-4 rounded shadow position-relative"> <!-- Increased padding to p-4 -->
+    <div class="container bg-white p-4 rounded shadow-sm position-relative"> <!-- Switched to light theme container styling -->
 
-        <h1 class="h2 fw-bold text-light mb-4 text-center">AI Product Roadmap Generator</h1> <!-- Centered Heading -->
+        <h1 class="h2 fw-bold mb-4 text-center">AI Product Roadmap Generator</h1> <!-- Removed text-light -->
 
         <!-- AI Generation Section -->
-        <div class="ai-generation-section border border-secondary rounded p-3 mb-4 bg-secondary bg-opacity-10">
+        <div class="ai-generation-section border rounded p-3 mb-4 bg-tiffany-tint"> <!-- Added bg-tiffany-tint -->
             <h2 class="h5 fw-semibold mb-3">Generate Roadmap from Idea</h2>
             <div class="mb-3">
                 <label for="ai-prompt-input" class="form-label small">Describe your project or product idea:</label>
-                <textarea id="ai-prompt-input" class="form-control bg-secondary text-light border-secondary" rows="4" placeholder="e.g., A mobile app to track personal reading habits and recommend new books based on AI analysis..."></textarea>
+                <textarea id="ai-prompt-input" class="form-control" rows="4" placeholder="e.g., A mobile app to track personal reading habits and recommend new books based on AI analysis..."></textarea> <!-- Removed dark theme classes -->
             </div>
             <div class="d-flex justify-content-between align-items-center">
                  <button id="generate-ai-roadmap-btn" type="button" class="btn btn-primary">
                      <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
                      Generate with AI
                  </button>
-                 <div id="ai-status-message" class="small text-muted ms-3 flex-grow-1 text-end"></div>
+                 <div id="ai-status-message" class="small ms-3 flex-grow-1 text-end"></div> <!-- Removed text-muted -->
             </div>
         </div>
 
-        <hr class="border-secondary my-4"> <!-- Separator -->
+        <hr class="my-4"> <!-- Removed border-secondary -->
 
-        <!-- Manual Controls Section -->
-        <h2 class="h5 fw-semibold mb-3">Manual Roadmap Controls</h2>
-        <div class="row g-3 mb-3 align-items-end"> <!-- Reduced bottom margin -->
-            <!-- Roadmap Name Input -->
-            <div class="col-md-6"> <!-- Adjusted width -->
+        <!-- Manual Controls Section Wrapper -->
+        <div class="manual-controls-wrapper bg-tiffany-tint p-3 rounded border mb-4"> <!-- Added wrapper -->
+            <h2 class="h5 fw-semibold mb-3">Manual Roadmap Controls</h2>
+            <div class="row g-3 mb-3 align-items-end"> <!-- Reduced bottom margin -->
+                <!-- Roadmap Name Input -->
+                <div class="col-md-6"> <!-- Adjusted width -->
                 <label for="roadmap-name" class="form-label mb-1">Product Name</label>
                 <input type="text" id="roadmap-name" name="roadmap-name"
-                       class="form-control bg-secondary text-light border-secondary"
-                       placeholder="Enter or edit the roadmap name">
+                       class="form-control"
+                       placeholder="Enter or edit the roadmap name"> <!-- Removed dark theme classes -->
             </div>
              <!-- Save Button Wrapper -->
              <div class="col-md-3 col-sm-6"> <!-- Adjusted width -->
-                 <button id="save-roadmap-button" class="w-100 btn btn-secondary">
+                 <button id="save-roadmap-button" class="w-100 btn btn-secondary"> <!-- Kept btn-secondary -->
                      Save Roadmap
                  </button>
              </div>
@@ -58,16 +57,17 @@
                      Load Saved Roadmap
                  </button>
              </div>
-        </div>
+            </div>
+        </div> <!-- End Manual Controls Wrapper -->
 
         <!-- Status Message Area for Save/Load -->
         <div class="text-end mb-4 mt-n1">
-             <span id="saveLoadStatus" class="small text-muted"></span>
+             <span id="saveLoadStatus" class="small"></span> <!-- Removed text-muted -->
         </div>
 
         <!-- Export Buttons Section - Initially hidden -->
         <div id="export-buttons-container" class="row g-3 mb-4 d-none">
-             <h3 class="h6 fw-semibold text-light col-12 mb-0 mt-2">Export Options</h3> <!-- Added heading -->
+             <h3 class="h6 fw-semibold col-12 mb-0 mt-2">Export Options</h3> <!-- Removed text-light -->
              <div class="col-sm-4">
                 <button id="export-pdf" class="w-100 btn btn-success">
                     Export as PDF
@@ -88,9 +88,9 @@
         <!-- Wrapper Div for PDF Export Content -->
         <div id="exportable-content">
             <!-- Editable Status Legend -->
-            <div id="status-legend" class="mb-4 p-3 bg-secondary bg-opacity-25 rounded border border-secondary">
+            <div id="status-legend" class="mb-4 p-3 border rounded bg-tiffany-tint"> <!-- Added bg-tiffany-tint -->
                 <div class="status-legend-header d-flex justify-content-between align-items-center mb-2">
-                     <h3 class="h6 fw-semibold text-light">Status Legend (Editable):</h3>
+                     <h3 class="h6 fw-semibold">Status Legend (Editable):</h3> <!-- Removed text-light -->
                      <button id="add-status-button" type="button" class="btn btn-success btn-sm">
                          + Add Status
                      </button>
@@ -110,7 +110,7 @@
             <!-- Output Container for Dynamic Roadmap -->
             <div id="roadmap-output" class="position-relative"> <!-- Added position-relative for placeholder centering if needed -->
                 <!-- Roadmap Placeholder -->
-                <div id="roadmap-placeholder" class="d-none text-center text-muted p-5 border border-secondary border-dashed rounded mt-4">
+                <div id="roadmap-placeholder" class="d-none text-center p-5 border border-dashed rounded mt-4"> <!-- Simplified styling for light theme -->
                     <p class="mb-0">Your generated or manually added roadmap milestones will appear here.</p>
                     <p class="small mb-0">Use the AI generator above or the "Add Milestone" button (which appears after loading/generating) to get started.</p>
                 </div>
@@ -121,7 +121,7 @@
     </div>
 
     <!-- Emoji Select Popup (Hidden Initially) -->
-    <div id="emoji-select-popup" class="d-none position-absolute bg-dark border border-secondary rounded shadow p-2 z-index-1">
+    <div id="emoji-select-popup" class="d-none position-absolute bg-light border rounded shadow p-2 z-index-1"> <!-- Switched to light theme -->
         <div class="emoji-grid d-grid gap-1 overflow-y-auto" style="grid-template-columns: repeat(4, 1fr); max-width: 150px; max-height: 200px;">
             <!-- Emoji buttons will be populated here -->
         </div>
