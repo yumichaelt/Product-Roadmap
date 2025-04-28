@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="css/custom_theme.css">
     <!-- html2pdf.js library via CDN (for PDF export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Note: No additional libraries needed for Word/PPT export as it uses the browser's fetch API -->
 </head>
 <body class="p-3"> <!-- Removed dark theme, kept padding -->
@@ -15,6 +17,52 @@
     <div class="container bg-white p-4 rounded shadow-sm position-relative"> <!-- Switched to light theme container styling -->
 
         <h1 class="h2 fw-bold mb-4 text-center">AI Product Roadmap Generator</h1> <!-- Removed text-light -->
+
+        <!-- Authentication Section -->
+        <div id="auth-section" class="mb-4 p-3 border rounded bg-light">
+            <div id="auth-forms">
+                <div class="row g-3">
+                    <!-- Sign Up Form -->
+                    <div class="col-md-6">
+                        <h3 class="h6 fw-semibold mb-2">Sign Up</h3>
+                        <form id="signup-form">
+                            <div class="mb-2">
+                                <label for="signup-email" class="form-label form-label-sm">Email</label>
+                                <input type="email" id="signup-email" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label for="signup-password" class="form-label form-label-sm">Password</label>
+                                <input type="password" id="signup-password" class="form-control form-control-sm" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Sign Up</button>
+                        </form>
+                    </div>
+                    <!-- Log In Form -->
+                    <div class="col-md-6">
+                        <h3 class="h6 fw-semibold mb-2">Log In</h3>
+                        <form id="login-form">
+                            <div class="mb-2">
+                                <label for="login-email" class="form-label form-label-sm">Email</label>
+                                <input type="email" id="login-email" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label for="login-password" class="form-label form-label-sm">Password</label>
+                                <input type="password" id="login-password" class="form-control form-control-sm" required>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm">Log In</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- User Status Area (Initially Hidden) -->
+            <div id="user-status" class="d-none mt-3">
+                <p class="mb-1">Logged in as: <strong id="user-email"></strong></p>
+                <button id="logout-button" class="btn btn-danger btn-sm">Log Out</button>
+            </div>
+             <!-- Auth Status Message Area -->
+            <div id="auth-status-message" class="mt-2 small text-danger"></div>
+        </div>
+        <!-- End Authentication Section -->
 
         <!-- AI Generation Section -->
         <div class="ai-generation-section border rounded p-3 mb-4 bg-tiffany-tint"> <!-- Added bg-tiffany-tint -->
@@ -58,6 +106,18 @@
                  </button>
              </div>
             </div>
+
+            <!-- Saved Roadmaps List (Initially Hidden) -->
+            <div id="saved-roadmaps-section" class="mt-3 d-none">
+                <h3 class="h6 fw-semibold mb-2">Load Saved Roadmap</h3>
+                <div id="saved-roadmaps-list" class="list-group list-group-flush border rounded" style="max-height: 150px; overflow-y: auto;">
+                    <!-- Roadmaps will be listed here -->
+                    <span class="list-group-item text-muted small">Log in to see your saved roadmaps.</span>
+                </div>
+                <div id="load-status-message" class="small mt-2"></div>
+            </div>
+            <!-- End Saved Roadmaps List -->
+
         </div> <!-- End Manual Controls Wrapper -->
 
         <!-- Status Message Area for Save/Load -->

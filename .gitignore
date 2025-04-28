@@ -12,3 +12,7 @@ node_modules/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Supabase CLI generated files (optional, but often good practice)
+supabase/.temp/
+supabase/.supabase/
